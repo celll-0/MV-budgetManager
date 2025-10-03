@@ -1,8 +1,5 @@
-package someTest;
-
-public void SomeTest {
-	pubic void main() {
-		system.out.println("runnning some tests on App...")
+public class SomeTest {
+	static void main() {
+		System.out.println("running some tests on App...");
 	}
-
 }
