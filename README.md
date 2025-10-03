@@ -1,0 +1,1 @@
+This is a budget managment application intended to make tracking your income and outgoings simpler. It does so by removing the need to remember transactions, facilitates prioritisation, and effecient fund allocation features for user defined silos.
