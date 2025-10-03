@@ -1,10 +1,7 @@
-package app;
-
-public void App {
-
-	public void main() {
-		system.out.println("Running application server.")
-		system.out.println("App listening on port 8000...")
+public class App {
+    public void main() {
+		System.out.println("Running application server.");
+		System.out.println("App listening on port 8000...");
 	}
 
 }
