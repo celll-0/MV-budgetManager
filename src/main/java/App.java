@@ -21,7 +21,7 @@ public class App {
                     printSummary(summary);
                 }
                 case "2" -> runIncomesProc(scanner, incomes, exit);
-                case "3" -> runExpensesProc(scanner, incomes, exit);
+                case "3" -> runExpensesProc(scanner, expenses, exit);
                 case "4" -> exit = true;
                 default -> System.out.println("Invalid choice. Please choose from the following options");
             }
@@ -38,17 +38,9 @@ public class App {
         return scanner.nextLine();
     }
 
-    private static String runIncomesMenuForInput(Scanner scanner) {
+    private static String runTransactionMenuForInput(Scanner scanner, String transactionType) {
         System.out.println("_________________________________\n");
-        System.out.println("[1] Add income transaction");
-        System.out.println("[2] Main menu");
-        System.out.println("[3] Exit");
-        return scanner.nextLine();
-    }
-
-    private static String runExpensesMenuForInput(Scanner scanner) {
-        System.out.println("_________________________________\n");
-        System.out.println("[1] Add expense transaction");
+        System.out.println(STR."[1] Add \{transactionType} transaction");
         System.out.println("[2] Main menu");
         System.out.println("[3] Exit");
         return scanner.nextLine();
@@ -57,7 +49,7 @@ public class App {
     private static void runIncomesProc(Scanner scanner, ArrayList<Map<String, Object>> incomes, boolean exit_main_proc){
         boolean exit_income = false;
         while (!exit_income) {
-            String choice_incomes = runIncomesMenuForInput(scanner);
+            String choice_incomes = runTransactionMenuForInput(scanner, "income");
             switch (choice_incomes) {
                 case "1" -> runAddTransaction(scanner, incomes, "income");
                 case "2" -> exit_income = true;
@@ -72,7 +64,7 @@ public class App {
     private static void runExpensesProc(Scanner scanner, ArrayList<Map<String, Object>> expenses, boolean exit_main_proc){
         boolean exit_expenses = false;
         while (!exit_expenses) {
-            String choice_expenses = runExpensesMenuForInput(scanner);
+            String choice_expenses = runTransactionMenuForInput(scanner, "expense");
             switch (choice_expenses) {
                 case "1" -> runAddTransaction(scanner, expenses, "expense");
                 case "2" -> exit_expenses = true;
