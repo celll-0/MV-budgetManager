@@ -46,12 +46,20 @@ public class App {
         return scanner.nextLine();
     }
 
+    private static String runExpensesMenuForInput(Scanner scanner) {
+        System.out.println("_________________________________\n");
+        System.out.println("[1] Add expense transaction");
+        System.out.println("[2] Main menu");
+        System.out.println("[3] Exit");
+        return scanner.nextLine();
+    }
+
     private static void runIncomesProc(Scanner scanner, ArrayList<Map<String, Object>> incomes, boolean exit_main_proc){
         boolean exit_income = false;
         while (!exit_income) {
             String choice_incomes = runIncomesMenuForInput(scanner);
             switch (choice_incomes) {
-                case "1" -> addTransaction(scanner, incomes, "income");
+                case "1" -> runAddTransaction(scanner, incomes, "income");
                 case "2" -> exit_income = true;
                 case "3" -> {
                     exit_main_proc = true;
@@ -64,9 +72,9 @@ public class App {
     private static void runExpensesProc(Scanner scanner, ArrayList<Map<String, Object>> expenses, boolean exit_main_proc){
         boolean exit_expenses = false;
         while (!exit_expenses) {
-            String choice_expenses = runIncomesMenuForInput(scanner);
+            String choice_expenses = runExpensesMenuForInput(scanner);
             switch (choice_expenses) {
-                case "1" -> addTransaction(scanner, expenses, "expense");
+                case "1" -> runAddTransaction(scanner, expenses, "expense");
                 case "2" -> exit_expenses = true;
                 case "3" -> {
                     exit_main_proc = true;
@@ -95,14 +103,14 @@ public class App {
         return summary;
     }
 
-    private static void addTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactions, String transactionType) {
+    private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType) {
         System.out.println("_________________________________\n");
         System.out.println(STR."Enter \{transactionType} amount: ");
         Integer amount = scanner.nextInt();
         System.out.println("What was this for: ");
         String description = scanner.next();
         clearInputBuffer(scanner);
-        transactions.add(createTransaction(amount, description));
+        transactionsList.add(createTransaction(amount, description));
     }
     
     private static Map<String, Object> createTransaction(Integer amount, String description) {
