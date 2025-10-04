@@ -67,6 +67,24 @@ public class App {
         return summary;
     }
 
+    private static void addIncomeTransaction(Scanner scanner, ArrayList<Map<String, Object>> incomes) {
+        System.out.println("_________________________________\n");
+        System.out.println("Enter income amount: ");
+        Integer incomeAmount = scanner.nextInt();
+        System.out.println("What was this for: ");
+        String description = scanner.nextLine();
+        incomes.add(createTransaction(incomeAmount, description));
+    }
+
+    private static void addExpenseTransaction(Scanner scanner, ArrayList<Map<String, Object>> expenses) {
+        System.out.println("_________________________________\n");
+        System.out.println("Enter expense amount: ");
+        Integer expenseAmount = scanner.nextInt();
+        System.out.println("What was this for: ");
+        String description = scanner.nextLine();
+        expenses.add(createTransaction(expenseAmount, description));
+    }
+
     private static Map<String, Object> createTransaction(Integer amount, String description) {
         Map<String, Object> transaction = new HashMap<>();
             transaction.put("Amount", amount);
