@@ -15,40 +15,15 @@ public class App {
 
         while (!exit) {
             String choice_main = runMainMenuForInput(scanner);
-            if(choice_main.equals("1")) {
-                Map<String, Integer> summary = calculateSummary(incomes, expenses);
-                printSummary(summary);
-            }
-            else if(choice_main.equals("2")) {
-                boolean exit_income = false;
-                while (!exit_income) {
-                    String choice_incomes = runIncomesMenuForInput(scanner);
-                    switch (choice_incomes) {
-                        case "1" -> addIncomeTransaction(scanner, incomes);
-                        case "2" -> exit_income = true;
-                        case "3" -> {
-                            exit = true;
-                            break;
-                        }
-                    }
+            switch (choice_main) {
+                case "1" -> {
+                    Map<String, Integer> summary = calculateSummary(incomes, expenses);
+                    printSummary(summary);
                 }
-            }
-            else if(choice_main.equals("3")) {
-                boolean exit_expenses = false;
-                while (!exit_expenses) {
-                    String choice_expenses = runIncomesMenuForInput(scanner);
-                    switch (choice_expenses) {
-                        case "1" -> addExpenseTransaction(scanner, expenses);
-                        case "2" -> exit_expenses = true;
-                        case "3" -> {
-                            exit = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            else if(choice_main.equals("4")) {
-                exit = true;
+                case "2" -> runIncomesProc(scanner, incomes, exit);
+                case "3" -> runExpensesProc(scanner, incomes, exit);
+                case "4" -> exit = true;
+                default -> System.out.println("Invalid choice. Please choose from the following options");
             }
         }
     }
@@ -56,19 +31,49 @@ public class App {
     private static String runMainMenuForInput(Scanner scanner) {
         System.out.println("\n\nWelcome to Buggi!\n");
         System.out.println("_________________________________\n");
-        System.out.println("1. Full budget summary");
-        System.out.println("2. Incomes ->");
-        System.out.println("3. Expenses ->");
-        System.out.println("4. Quit");
+        System.out.println("[1] Full budget summary");
+        System.out.println("[2] Incomes ->");
+        System.out.println("[3] Expenses ->");
+        System.out.println("[4] Quit");
         return scanner.nextLine();
     }
 
     private static String runIncomesMenuForInput(Scanner scanner) {
         System.out.println("_________________________________\n");
-        System.out.println("1. Add income transaction");
-        System.out.println("2. Main menu");
-        System.out.println("3. Exit");
+        System.out.println("[1] Add income transaction");
+        System.out.println("[2] Main menu");
+        System.out.println("[3] Exit");
         return scanner.nextLine();
+    }
+
+    private static void runIncomesProc(Scanner scanner, ArrayList<Map<String, Object>> incomes, boolean exit_main_proc){
+        boolean exit_income = false;
+        while (!exit_income) {
+            String choice_incomes = runIncomesMenuForInput(scanner);
+            switch (choice_incomes) {
+                case "1" -> addTransaction(scanner, incomes, "income");
+                case "2" -> exit_income = true;
+                case "3" -> {
+                    exit_main_proc = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void runExpensesProc(Scanner scanner, ArrayList<Map<String, Object>> expenses, boolean exit_main_proc){
+        boolean exit_expenses = false;
+        while (!exit_expenses) {
+            String choice_expenses = runIncomesMenuForInput(scanner);
+            switch (choice_expenses) {
+                case "1" -> addTransaction(scanner, expenses, "expense");
+                case "2" -> exit_expenses = true;
+                case "3" -> {
+                    exit_main_proc = true;
+                    break;
+                }
+            }
+        }
     }
 
     private static void printSummary(Map<String, Integer> summary) {
@@ -77,6 +82,7 @@ public class App {
         System.out.println(STR."Income: \{summary.get("incomes")}");
         System.out.println(STR."Expenses: \{summary.get("expenses")}");
         System.out.println(STR."Net: \{summary.get("total")}");
+        System.out.println("\n___________________________\n");
     }
 
     private static Map<String, Integer> calculateSummary(ArrayList<Map<String, Object>> incomes, ArrayList<Map<String, Object>> expenses) {
@@ -89,28 +95,16 @@ public class App {
         return summary;
     }
 
-    private static void addIncomeTransaction(Scanner scanner, ArrayList<Map<String, Object>> incomes) {
+    private static void addTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactions, String transactionType) {
         System.out.println("_________________________________\n");
-        System.out.println("Enter income amount: ");
-        Integer incomeAmount = scanner.nextInt();
+        System.out.println(STR."Enter \{transactionType} amount: ");
+        Integer amount = scanner.nextInt();
         System.out.println("What was this for: ");
         String description = scanner.next();
-        //  consume leftover newline
-        scanner.nextLine();
-        incomes.add(createTransaction(incomeAmount, description));
+        clearInputBuffer(scanner);
+        transactions.add(createTransaction(amount, description));
     }
-
-    private static void addExpenseTransaction(Scanner scanner, ArrayList<Map<String, Object>> expenses) {
-        System.out.println("_________________________________\n");
-        System.out.println("Enter expense amount: ");
-        Integer expenseAmount = scanner.nextInt();
-        System.out.println("What was this for: ");
-        String description = scanner.next();
-        //  consume leftover newline
-        scanner.nextLine();
-        expenses.add(createTransaction(expenseAmount, description));
-    }
-
+    
     private static Map<String, Object> createTransaction(Integer amount, String description) {
         Map<String, Object> transaction = new HashMap<>();
             transaction.put("Amount", amount);
@@ -125,5 +119,10 @@ public class App {
         }
         return total;
     }
+
+    private static void clearInputBuffer(Scanner scanner) {
+        // Skip any remaining newline or whitespace in the buffer
+        scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
+    }
 }
-	
+
