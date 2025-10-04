@@ -34,7 +34,18 @@ public class App {
                 }
             }
             else if(choice_main.equals("3")) {
-//              run expenses process
+                boolean exit_expenses = false;
+                while (!exit_expenses) {
+                    String choice_expenses = runIncomesMenuForInput(scanner);
+                    switch (choice_expenses) {
+                        case "1" -> addExpenseTransaction(scanner, expenses);
+                        case "2" -> exit_expenses = true;
+                        case "3" -> {
+                            exit = true;
+                            break;
+                        }
+                    }
+                }
             }
             else if(choice_main.equals("4")) {
                 exit = true;
