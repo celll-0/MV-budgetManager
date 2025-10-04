@@ -27,7 +27,7 @@ public class App {
 
                 }
             }
-            exit = true;
+
         }
     }
 
@@ -57,6 +57,29 @@ public class App {
         System.out.println(STR."Net: \{summary.get("total")}");
     }
 
+    private static Map<String, Integer> calculateSummary(ArrayList<Map<String, Object>> incomes, ArrayList<Map<String, Object>> expenses) {
+        Integer incomeSum = getTransactionTotal(incomes);
+        Integer expensesSum = getTransactionTotal(expenses);
+        Map<String, Integer> summary =  new HashMap<>();
+            summary.put("incomes", incomeSum);
+            summary.put("expenses", expensesSum);
+            summary.put("total", incomeSum - expensesSum);
+        return summary;
+    }
 
+    private static Map<String, Object> createTransaction(Integer amount, String description) {
+        Map<String, Object> transaction = new HashMap<>();
+            transaction.put("Amount", amount);
+            transaction.put("Desc", description);
+        return transaction;
+    }
+
+    private static int getTransactionTotal(ArrayList<Map<String, Object>> transactions) {
+        int total = 0;
+        for(Map<String, Object> transaction : transactions) {
+            total += (Integer) transaction.get("Amount");
+        }
+        return total;
+    }
 }
 	
