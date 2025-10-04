@@ -12,9 +12,13 @@ public class App {
 
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
+        boolean first_run = true;
 
         while (!exit) {
-            String choice_main = runMainMenuForInput(scanner);
+            String choice_main = runMainMenuForInput(scanner, first_run);
+            if (first_run) {
+                first_run = false;
+            }
             switch (choice_main) {
                 case "1" -> {
                     Map<String, Integer> summary = calculateSummary(incomes, expenses);
@@ -28,9 +32,11 @@ public class App {
         }
     }
 
-    private static String runMainMenuForInput(Scanner scanner) {
-        System.out.println("\n\nWelcome to Buggi!\n");
-        System.out.println("_________________________________\n");
+    private static String runMainMenuForInput(Scanner scanner, boolean first_run) {
+        if (first_run) {
+            System.out.println("\n\nWelcome to Buggi!");
+        }
+        System.out.println("\n_________________________________\n");
         System.out.println("[1] Full budget summary");
         System.out.println("[2] Incomes ->");
         System.out.println("[3] Expenses ->");
@@ -57,6 +63,7 @@ public class App {
                     exit_main_proc = true;
                     break;
                 }
+                default -> System.out.println("Invalid choice. Please choose from the following options");
             }
         }
     }
@@ -72,6 +79,7 @@ public class App {
                     exit_main_proc = true;
                     break;
                 }
+                default -> System.out.println("Invalid choice. Please choose from the following options");
             }
         }
     }
@@ -98,14 +106,14 @@ public class App {
     private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType) {
         System.out.println("_________________________________\n");
         System.out.println(STR."Enter \{transactionType} amount: ");
-        Integer amount = scanner.nextInt();
+        int amount = scanner.nextInt();
         System.out.println("What was this for: ");
         String description = scanner.next();
         clearInputBuffer(scanner);
         transactionsList.add(createTransaction(amount, description));
     }
     
-    private static Map<String, Object> createTransaction(Integer amount, String description) {
+    private static Map<String, Object> createTransaction(int amount, String description) {
         Map<String, Object> transaction = new HashMap<>();
             transaction.put("Amount", amount);
             transaction.put("Desc", description);
