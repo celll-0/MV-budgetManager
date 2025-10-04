@@ -1,4 +1,3 @@
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,23 +15,35 @@ public class App {
 
         while (!exit) {
             String choice_main = runMainMenuForInput(scanner);
-
             if(choice_main.equals("1")) {
                 Map<String, Integer> summary = calculateSummary(incomes, expenses);
                 printSummary(summary);
             }
             else if(choice_main.equals("2")) {
-                String choice_incomes = runIncomesMenuForInput(scanner);
-                if(choice_incomes.equals("1")) {
-
+                boolean exit_income = false;
+                while (!exit_income) {
+                    String choice_incomes = runIncomesMenuForInput(scanner);
+                    switch (choice_incomes) {
+                        case "1" -> addIncomeTransaction(scanner, incomes);
+                        case "2" -> exit_income = true;
+                        case "3" -> {
+                            exit = true;
+                            break;
+                        }
+                    }
                 }
             }
-
+            else if(choice_main.equals("3")) {
+//              run expenses process
+            }
+            else if(choice_main.equals("4")) {
+                exit = true;
+            }
         }
     }
 
     private static String runMainMenuForInput(Scanner scanner) {
-        System.out.println("Welcome to Buggi!\n\n");
+        System.out.println("\n\nWelcome to Buggi!\n");
         System.out.println("_________________________________\n");
         System.out.println("1. Full budget summary");
         System.out.println("2. Incomes ->");
@@ -72,7 +83,9 @@ public class App {
         System.out.println("Enter income amount: ");
         Integer incomeAmount = scanner.nextInt();
         System.out.println("What was this for: ");
-        String description = scanner.nextLine();
+        String description = scanner.next();
+        //  consume leftover newline
+        scanner.nextLine();
         incomes.add(createTransaction(incomeAmount, description));
     }
 
@@ -81,7 +94,9 @@ public class App {
         System.out.println("Enter expense amount: ");
         Integer expenseAmount = scanner.nextInt();
         System.out.println("What was this for: ");
-        String description = scanner.nextLine();
+        String description = scanner.next();
+        //  consume leftover newline
+        scanner.nextLine();
         expenses.add(createTransaction(expenseAmount, description));
     }
 
