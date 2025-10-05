@@ -84,12 +84,25 @@ public class App {
         }
     }
 
+    private static void printTransactionReport(ArrayList<Map<String, Object>> incomes, String transactionType) {
+//        Make transactionType title case.
+        transactionType = transactionType.substring(0,1).toUpperCase() + transactionType.substring(1).toLowerCase();
+        System.out.println("\n___________________________\n\n");
+        System.out.println(STR."\{transactionType} Report_____________\n");
+//        Print out each transaction in amount-description format.
+        for(Map<String, Object> transaction : incomes) {
+            System.out.println(STR."---> Amount: £\{transaction.get("amount")}");
+            System.out.println(STR."---> Desc: \{transaction.get("description")}");
+            System.out.println("\n\n");
+        }
+    }
+
     private static void printSummary(Map<String, Integer> summary) {
         System.out.println("\n___________________________\n");
         System.out.println("Summary: \n");
-        System.out.println(STR."Income: \{summary.get("incomes")}");
-        System.out.println(STR."Expenses: \{summary.get("expenses")}");
-        System.out.println(STR."Net: \{summary.get("total")}");
+        System.out.println(STR."Income: £\{summary.get("incomes")}");
+        System.out.println(STR."Expenses: £\{summary.get("expenses")}");
+        System.out.println(STR."Net: £\{summary.get("total")}");
         System.out.println("\n___________________________\n");
     }
 
@@ -158,15 +171,15 @@ public class App {
     
     private static Map<String, Object> createTransaction(int amount, String description) {
         Map<String, Object> transaction = new HashMap<>();
-            transaction.put("Amount", amount);
-            transaction.put("Desc", description);
+            transaction.put("amount", amount);
+            transaction.put("description", description);
         return transaction;
     }
 
     private static int getTransactionTotal(ArrayList<Map<String, Object>> transactions) {
         int total = 0;
         for(Map<String, Object> transaction : transactions) {
-            total += (Integer) transaction.get("Amount");
+            total += (Integer) transaction.get("amount");
         }
         return total;
     }
