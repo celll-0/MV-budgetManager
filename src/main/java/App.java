@@ -47,8 +47,9 @@ public class App {
     private static String runTransactionMenuForInput(Scanner scanner, String transactionType) {
         System.out.println("_________________________________\n");
         System.out.println(STR."[1] Add \{transactionType} transaction");
-        System.out.println("[2] Main menu");
-        System.out.println("[3] Exit");
+        System.out.println(STR."[2] See \{transactionType} report");
+        System.out.println("[3] Main menu");
+        System.out.println("[4] Exit");
         return scanner.nextLine();
     }
 
@@ -58,8 +59,9 @@ public class App {
             String choice_incomes = runTransactionMenuForInput(scanner, "income");
             switch (choice_incomes) {
                 case "1" -> runAddTransaction(scanner, incomes, "income");
-                case "2" -> exit_income = true;
-                case "3" -> {
+                case "2" -> printTransactionReport(incomes, "income");
+                case "3" -> exit_income = true;
+                case "4" -> {
                     exit_main_proc = true;
                     break;
                 }
@@ -74,8 +76,9 @@ public class App {
             String choice_expenses = runTransactionMenuForInput(scanner, "expense");
             switch (choice_expenses) {
                 case "1" -> runAddTransaction(scanner, expenses, "expense");
-                case "2" -> exit_expenses = true;
-                case "3" -> {
+                case "2" -> printTransactionReport(expenses, "expense");
+                case "3" -> exit_expenses = true;
+                case "4" -> {
                     exit_main_proc = true;
                     break;
                 }
@@ -84,13 +87,13 @@ public class App {
         }
     }
 
-    private static void printTransactionReport(ArrayList<Map<String, Object>> incomes, String transactionType) {
+    private static void printTransactionReport(ArrayList<Map<String, Object>> transactionList, String transactionType) {
 //        Make transactionType title case.
         transactionType = transactionType.substring(0,1).toUpperCase() + transactionType.substring(1).toLowerCase();
         System.out.println("\n___________________________\n\n");
         System.out.println(STR."\{transactionType} Report_____________\n");
 //        Print out each transaction in amount-description format.
-        for(Map<String, Object> transaction : incomes) {
+        for(Map<String, Object> transaction : transactionList) {
             System.out.println(STR."---> Amount: £\{transaction.get("amount")}");
             System.out.println(STR."---> Desc: \{transaction.get("description")}");
             System.out.println("\n\n");
@@ -127,7 +130,7 @@ public class App {
      * @param transactionType The type of transaction ("income" or "expense") for display purposes
      */
     private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType) {
-        runAddTransaction(scanner, transactionsList, transactionType, 0);
+        runAddTransaction(scanner, transactionsList, transactionType, 0, "");
     }
 
     /**
@@ -139,29 +142,39 @@ public class App {
      * @param scanner The Scanner object for reading user input
      * @param transactionsList The list to add the transaction to (incomes or expenses)
      * @param transactionType The type of transaction ("income" or "expense") for display purposes
-     * @param retryCount The current number of retry attempts (used for recursive validation)
+     * @param tryRetryCount The current number of retry attempts (used for recursive validation)
+     * @param description The user description of the transaction
      */
-    private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType, int retryCount) {
+    private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType, int tryRetryCount, String description) {
         System.out.println("_________________________________\n");
-        String description = "";
+        if(tryRetryCount == 3) {
+            System.out.println("Too many invalid attempts. Exiting To menu...");
+            return;
+        }
 
-        if(retryCount == 0) {
+        description = description.isBlank() ? "" : description;
+        if(tryRetryCount == 0) {
             System.out.println("What was this for: ");
             description = scanner.next();
         }
 
-        System.out.println(STR."Enter \{transactionType} amount: ");
-        int amount = scanner.nextInt();
+        int amount;
+        try {
+            System.out.println(STR."Enter \{transactionType} amount: ");
+            amount = scanner.nextInt();
+        } catch(java.util.InputMismatchException e){
+            tryRetryCount++;
+            System.out.println("Invalid amount. Please enter a positive number");
+            clearInputBuffer(scanner);
+            runAddTransaction(scanner, transactionsList, transactionType, tryRetryCount, description);
+            return;
+        }
 
         if(amount <= 0) {
-            if(retryCount == 2) {
-                System.out.println("Too many invalid attempts. Exiting To menu");
-                clearInputBuffer(scanner);
-                return;
-            }
-            retryCount++;
-            System.out.println("Invalid amount. Please enter a positive number");
-            runAddTransaction(scanner, transactionsList, transactionType, retryCount);
+            tryRetryCount++;
+            if(tryRetryCount < 3) System.out.println("Invalid amount. Please enter a positive number");
+            clearInputBuffer(scanner);
+            runAddTransaction(scanner, transactionsList, transactionType, tryRetryCount, description);
             return;
         }
 
@@ -185,8 +198,10 @@ public class App {
     }
 
     private static void clearInputBuffer(Scanner scanner) {
-        // Skip any remaining newline or whitespace in the buffer
-        scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
+        if(scanner.findInLine(".+") != null) {
+            // Skip any remaining newline or whitespace in the buffer
+            scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
+        }
     }
 }
 
