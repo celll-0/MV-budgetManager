@@ -103,10 +103,31 @@ public class App {
         return summary;
     }
 
+    /**
+     * Adds a new transaction to the specified list with user input validation.
+     * This is a convenience method that calls the overloaded version with a default retry count of 0.
+     * Use as entry to point to add a new transaction over the overloaded, unless in special cases
+     * where offsetting the retry count is desired.
+     *
+     * @param scanner The Scanner object for reading user input
+     * @param transactionsList The list to add the transaction to (incomes or expenses)
+     * @param transactionType The type of transaction ("income" or "expense") for display purposes
+     */
     private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType) {
         runAddTransaction(scanner, transactionsList, transactionType, 0);
     }
 
+    /**
+     * Adds a new transaction to the specified list with user input validation and retry logic.
+     * Prompts the user for an amount and description. If the amount is invalid (zero or negative),
+     * the user is given up to 2 more attempts before returning to the menu.
+     * Use runAddTransaction parent function instead.
+     *
+     * @param scanner The Scanner object for reading user input
+     * @param transactionsList The list to add the transaction to (incomes or expenses)
+     * @param transactionType The type of transaction ("income" or "expense") for display purposes
+     * @param retryCount The current number of retry attempts (used for recursive validation)
+     */
     private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType, int retryCount) {
         System.out.println("_________________________________\n");
         String description = "";
