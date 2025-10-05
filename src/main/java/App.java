@@ -104,11 +104,33 @@ public class App {
     }
 
     private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType) {
+        runAddTransaction(scanner, transactionsList, transactionType, 0);
+    }
+
+    private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType, int retryCount) {
         System.out.println("_________________________________\n");
+        String description = "";
+
+        if(retryCount == 0) {
+            System.out.println("What was this for: ");
+            description = scanner.next();
+        }
+
         System.out.println(STR."Enter \{transactionType} amount: ");
         int amount = scanner.nextInt();
-        System.out.println("What was this for: ");
-        String description = scanner.next();
+
+        if(amount <= 0) {
+            if(retryCount == 2) {
+                System.out.println("Too many invalid attempts. Exiting To menu");
+                clearInputBuffer(scanner);
+                return;
+            }
+            retryCount++;
+            System.out.println("Invalid amount. Please enter a positive number");
+            runAddTransaction(scanner, transactionsList, transactionType, retryCount);
+            return;
+        }
+
         clearInputBuffer(scanner);
         transactionsList.add(createTransaction(amount, description));
     }
