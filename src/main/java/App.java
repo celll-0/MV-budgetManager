@@ -15,7 +15,7 @@ public class App {
         boolean first_run = true;
 
         while (!exit) {
-            String choice_main = runMainMenuForInput(scanner, first_run);
+            String choice_main = printMainMenuForInput(scanner, first_run);
             if(exit) System.out.println("Should QUIT");
             if (first_run) {
                 first_run = false;
@@ -39,7 +39,7 @@ public class App {
         }
     }
 
-    private static String runMainMenuForInput(Scanner scanner, boolean first_run) {
+    private static String printMainMenuForInput(Scanner scanner, boolean first_run) {
         if (first_run) {
             System.out.println("\n\nWelcome to Buggi!");
         }
@@ -51,7 +51,7 @@ public class App {
         return scanner.nextLine();
     }
 
-    private static String runTransactionMenuForInput(Scanner scanner, String transactionType) {
+    private static String printTransactionMenuForInput(Scanner scanner, String transactionType) {
         System.out.println("_________________________________\n");
         System.out.println(STR."[1] Add \{transactionType} transaction");
         System.out.println(STR."[2] See \{transactionType} report");
@@ -64,7 +64,7 @@ public class App {
         boolean exit = false;
         boolean exit_main_proc = false;
         while (!exit) {
-            String choice_expenses = runTransactionMenuForInput(scanner, transactionType);
+            String choice_expenses = printTransactionMenuForInput(scanner, transactionType);
             switch (choice_expenses) {
                 case "1" -> runAddTransaction(scanner, transactionList, transactionType);
                 case "2" -> printTransactionReport(transactionList, transactionType);
