@@ -24,14 +24,15 @@ public class App {
                 case "1" -> {
                     Map<String, Integer> summary = calculateSummary(incomes, expenses);
                     printSummary(summary);
+                    runFullBudgetReportProc(scanner, incomes, expenses, 0);
                 }
                 case "2" -> {
-                    boolean exitReq = runTransactionProc("income", scanner, incomes);
-                    if(exitReq) exit = true;
+                    boolean exit_req = runTransactionProc("income", scanner, incomes);
+                    if(exit_req) exit = true;
                 }
                 case "3" -> {
-                    boolean exitReq = runTransactionProc("expense", scanner, expenses);
-                    if(exitReq) exit = true;
+                    boolean exit_req = runTransactionProc("expense", scanner, expenses);
+                    if(exit_req) exit = true;
                 }
                 case "4" -> exit = true;
                 default -> System.out.println("Invalid choice. Please choose from the following options");
@@ -60,6 +61,28 @@ public class App {
         return scanner.nextLine();
     }
 
+    private static void printTransactionReport(ArrayList<Map<String, Object>> transactionList, String transactionType) {
+//        Make transactionType title case.
+        transactionType = transactionType.substring(0,1).toUpperCase() + transactionType.substring(1).toLowerCase();
+        System.out.println("\n___________________________\n\n");
+        System.out.println(STR."\{transactionType} Report______________\n");
+//        Print out each transaction in amount-description format.
+        for(Map<String, Object> transaction : transactionList) {
+            System.out.println(STR."---> Amount: £\{transaction.get("amount")}");
+            System.out.println(STR."---> Desc: \{transaction.get("description")}");
+            System.out.println("\n\n");
+        }
+    }
+
+    private static void printSummary(Map<String, Integer> summary) {
+        System.out.println("\n___________________________\n");
+        System.out.println("Summary: \n");
+        System.out.println(STR."Income: £\{summary.get("incomes")}");
+        System.out.println(STR."Expenses: £\{summary.get("expenses")}");
+        System.out.println(STR."Net: £\{summary.get("total")}");
+        System.out.println("\n___________________________\n");
+    }
+
     private static boolean runTransactionProc(String transactionType, Scanner scanner, ArrayList<Map<String, Object>> transactionList){
         boolean exit = false;
         boolean exit_main_proc = false;
@@ -81,26 +104,28 @@ public class App {
         return exit_main_proc;
     }
 
-    private static void printTransactionReport(ArrayList<Map<String, Object>> transactionList, String transactionType) {
-//        Make transactionType title case.
-        transactionType = transactionType.substring(0,1).toUpperCase() + transactionType.substring(1).toLowerCase();
-        System.out.println("\n___________________________\n\n");
-        System.out.println(STR."\{transactionType} Report______________\n");
-//        Print out each transaction in amount-description format.
-        for(Map<String, Object> transaction : transactionList) {
-            System.out.println(STR."---> Amount: £\{transaction.get("amount")}");
-            System.out.println(STR."---> Desc: \{transaction.get("description")}");
-            System.out.println("\n\n");
+    public static void runFullBudgetReportProc(Scanner scanner, ArrayList<Map<String, Object>> incomes, ArrayList<Map<String, Object>> expenses, int tryRetryCount) {
+        System.out.println("Would you like to see a full report? Answer yes(y)/no(n)");
+        String report_choice = scanner.nextLine();
+        switch (report_choice) {
+            case "y" -> {
+                printTransactionReport(incomes, "income");
+                printTransactionReport(expenses, "expense");
+            }
+            case "n" -> {
+                System.out.println("Exiting to main menu!");
+            }
+            default -> {
+                if(tryRetryCount < 3) {
+                    tryRetryCount++;
+                    System.out.println("Invalid choice. Please choose from the following options");
+                    System.out.println("_________________________________");
+                    runFullBudgetReportProc(scanner, incomes, expenses, tryRetryCount);
+                } else {
+                    System.out.println("Too many invalid attempts. Exiting to main menu...");
+                }
+            }
         }
-    }
-
-    private static void printSummary(Map<String, Integer> summary) {
-        System.out.println("\n___________________________\n");
-        System.out.println("Summary: \n");
-        System.out.println(STR."Income: £\{summary.get("incomes")}");
-        System.out.println(STR."Expenses: £\{summary.get("expenses")}");
-        System.out.println(STR."Net: £\{summary.get("total")}");
-        System.out.println("\n___________________________\n");
     }
 
     private static Map<String, Integer> calculateSummary(ArrayList<Map<String, Object>> incomes, ArrayList<Map<String, Object>> expenses) {
