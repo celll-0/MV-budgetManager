@@ -50,13 +50,12 @@ public class App {
         System.out.println(STR."[2] See \{transactionType} report");
         System.out.println("[3] Main menu");
         System.out.println("[4] Exit");
-//        System.out.println(STR."Left in buffer: ->|\{scanner.nextLine()}|<-");
         return scanner.nextLine();
     }
 
     private static void runIncomesProc(Scanner scanner, ArrayList<Map<String, Object>> incomes, boolean exit_main_proc){
         boolean exit_income = false;
-        while (!exit_income) {
+        while (!exit_income || !exit_main_proc) {
             String choice_incomes = runTransactionMenuForInput(scanner, "income");
             switch (choice_incomes) {
                 case "1" -> runAddTransaction(scanner, incomes, "income");
@@ -64,6 +63,7 @@ public class App {
                 case "3" -> exit_income = true;
                 case "4" -> {
                     exit_main_proc = true;
+                    exit_income = true;
                     break;
                 }
                 default -> System.out.println("Invalid choice. Please choose from the following options");
@@ -73,7 +73,7 @@ public class App {
 
     private static void runExpensesProc(Scanner scanner, ArrayList<Map<String, Object>> expenses, boolean exit_main_proc){
         boolean exit_expenses = false;
-        while (!exit_expenses) {
+        while (!exit_expenses || !exit_main_proc) {
             String choice_expenses = runTransactionMenuForInput(scanner, "expense");
             switch (choice_expenses) {
                 case "1" -> runAddTransaction(scanner, expenses, "expense");
@@ -81,6 +81,7 @@ public class App {
                 case "3" -> exit_expenses = true;
                 case "4" -> {
                     exit_main_proc = true;
+                    exit_expenses = true;
                     break;
                 }
                 default -> System.out.println("Invalid choice. Please choose from the following options");
@@ -154,6 +155,7 @@ public class App {
             return;
         }
         // Preserve the origin user description in the case of a recursive call and do not request it again.
+
         description = description.isBlank() ? "" : description;
         if(tryRetryCount == 0) {
             System.out.println("What was this for: ");
