@@ -7,8 +7,8 @@ public class App {
 
     public static void main(String[] args) {
 
-        ArrayList<Map<String, Object>> incomes = new ArrayList<Map<String, Object>>();
-        ArrayList<Map<String, Object>> expenses = new ArrayList<Map<String, Object>>();
+        TransactionList incomes = new TransactionList("income");
+        TransactionList expenses = new TransactionList("expense");
 
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
@@ -27,16 +27,77 @@ public class App {
                     runFullBudgetReportProc(scanner, incomes, expenses, 0);
                 }
                 case "2" -> {
-                    boolean exit_req = runTransactionProc("income", scanner, incomes);
+                    boolean exit_req = runTransactionProc(scanner, incomes);
                     if(exit_req) exit = true;
                 }
                 case "3" -> {
-                    boolean exit_req = runTransactionProc("expense", scanner, expenses);
+                    boolean exit_req = runTransactionProc(scanner, expenses);
                     if(exit_req) exit = true;
                 }
                 case "4" -> exit = true;
                 default -> System.out.println("Invalid choice. Please choose from the following options");
             }
+        }
+    }
+
+    public static class TransactionList {
+        private final ArrayList<Transaction> transactions;
+        public final String type;
+
+        public TransactionList(String type){
+            this.type = type;
+            this.transactions = new ArrayList<Transaction>();
+        }
+
+        public ArrayList<Transaction> getAll() {
+            return this.transactions;
+        }
+
+        public void add(Transaction transaction){
+            if(transaction.type.equals(this.type)){
+                this.transactions.add(transaction);
+            } else {
+                throw new IllegalArgumentException("Transaction type mismatch");
+            }
+        }
+
+        public void removeLastTransaction(Transaction transaction){
+            int lastIndex = this.transactions.size() - 1;
+            this.transactions.remove(lastIndex);
+        }
+    }
+
+    public static class Transaction {
+        private int amount;
+        private String description;
+        public String type;
+
+        public Transaction(int amount, String description, String type) {
+            this.amount = amount;
+            this.description = description;
+            this.type = type;
+        }
+
+        public int getAmount() {
+            return amount;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void addAmount(int amount){
+            this.amount += amount;
+        }
+
+        public void addDescription(String value){
+            this.description = value;
+        }
+
+        public String toString(){
+            String amountLine = STR."---> Amount: £\{this.amount}";
+            String descriptionLine = STR."---> Desc: \{this.description}";
+            return amountLine + "\n" + descriptionLine;
         }
     }
 
@@ -61,15 +122,14 @@ public class App {
         return scanner.nextLine();
     }
 
-    private static void printTransactionReport(ArrayList<Map<String, Object>> transactionList, String transactionType) {
+    private static void printTransactionReport(TransactionList transactionList) {
 //        Make transactionType title case.
-        transactionType = transactionType.substring(0,1).toUpperCase() + transactionType.substring(1).toLowerCase();
+        String transactionType = transactionList.type.substring(0,1).toUpperCase() + transactionList.type.substring(1).toLowerCase();
         System.out.println("\n___________________________\n\n");
         System.out.println(STR."\{transactionType} Report______________\n");
 //        Print out each transaction in amount-description format.
-        for(Map<String, Object> transaction : transactionList) {
-            System.out.println(STR."---> Amount: £\{transaction.get("amount")}");
-            System.out.println(STR."---> Desc: \{transaction.get("description")}");
+        for(Transaction transaction : transactionList.getAll()) {
+            System.out.println(transaction.toString());
             System.out.println("\n\n");
         }
     }
@@ -83,14 +143,14 @@ public class App {
         System.out.println("\n___________________________\n");
     }
 
-    private static boolean runTransactionProc(String transactionType, Scanner scanner, ArrayList<Map<String, Object>> transactionList){
+    private static boolean runTransactionProc(Scanner scanner, TransactionList transactionList){
         boolean exit = false;
         boolean exit_main_proc = false;
         while (!exit) {
-            String choice_expenses = printTransactionMenuForInput(scanner, transactionType);
+            String choice_expenses = printTransactionMenuForInput(scanner, transactionList.type);
             switch (choice_expenses) {
-                case "1" -> runAddTransaction(scanner, transactionList, transactionType);
-                case "2" -> printTransactionReport(transactionList, transactionType);
+                case "1" -> runAddTransaction(scanner, transactionList);
+                case "2" -> printTransactionReport(transactionList);
                 case "3" -> {
                     exit = true;
                 }
@@ -104,13 +164,13 @@ public class App {
         return exit_main_proc;
     }
 
-    public static void runFullBudgetReportProc(Scanner scanner, ArrayList<Map<String, Object>> incomes, ArrayList<Map<String, Object>> expenses, int tryRetryCount) {
+    public static void runFullBudgetReportProc(Scanner scanner, TransactionList incomes, TransactionList expenses, int tryRetryCount) {
         System.out.println("Would you like to see a full report? Answer yes(y)/no(n)");
         String report_choice = scanner.nextLine();
         switch (report_choice) {
             case "y" -> {
-                printTransactionReport(incomes, "income");
-                printTransactionReport(expenses, "expense");
+                printTransactionReport(incomes);
+                printTransactionReport(expenses);
             }
             case "n" -> {
                 System.out.println("Exiting to main menu!");
@@ -128,7 +188,7 @@ public class App {
         }
     }
 
-    private static Map<String, Integer> calculateSummary(ArrayList<Map<String, Object>> incomes, ArrayList<Map<String, Object>> expenses) {
+    private static Map<String, Integer> calculateSummary(TransactionList incomes, TransactionList expenses) {
         Integer incomeSum = getTransactionTotal(incomes);
         Integer expensesSum = getTransactionTotal(expenses);
         Map<String, Integer> summary =  new HashMap<>();
@@ -145,11 +205,10 @@ public class App {
      * where offsetting the retry count is desired.
      *
      * @param scanner The Scanner object for reading user input
-     * @param transactionsList The list to add the transaction to (incomes or expenses)
-     * @param transactionType The type of transaction ("income" or "expense") for display purposes
+     * @param transactionList The list to add the transaction to (incomes or expenses)
      */
-    private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType) {
-        runAddTransaction(scanner, transactionsList, transactionType, 0, "");
+    private static void runAddTransaction(Scanner scanner, TransactionList transactionList) {
+        runAddTransaction(scanner, transactionList, 0, "");
     }
 
     /**
@@ -159,12 +218,11 @@ public class App {
      * Use runAddTransaction parent function instead.
      *
      * @param scanner The Scanner object for reading user input
-     * @param transactionsList The list to add the transaction to (incomes or expenses)
-     * @param transactionType The type of transaction ("income" or "expense") for display purposes
+     * @param transactionList The list to add the transaction to (incomes or expenses)
      * @param tryRetryCount The current number of retry attempts (used for recursive validation)
      * @param description The user description of the transaction
      */
-    private static void runAddTransaction(Scanner scanner, ArrayList<Map<String, Object>> transactionsList, String transactionType, int tryRetryCount, String description) {
+    private static void runAddTransaction(Scanner scanner, TransactionList transactionList, int tryRetryCount, String description) {
         System.out.println("_________________________________\n");
         // Return to the previous menu once the maximum retry count is reached
         if(tryRetryCount == 3) {
@@ -181,14 +239,14 @@ public class App {
 
         int amount;
         try {
-            System.out.println(STR."Enter \{transactionType} amount: ");
+            System.out.println(STR."Enter \{transactionList.type} amount: ");
             amount = scanner.nextInt();
         } catch(java.util.InputMismatchException e){
             // Attempt retry if the user enters a non-numeric value, clear the buffer and alert the user.
             tryRetryCount++;
             System.out.println("\nInvalid amount. Please enter a positive number");
             clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionsList, transactionType, tryRetryCount, description);
+            runAddTransaction(scanner, transactionList, tryRetryCount, description);
             return;
         }
 
@@ -197,27 +255,27 @@ public class App {
             tryRetryCount++;
             if(tryRetryCount < 3) System.out.println("\nInvalid amount. Please enter a positive number");
             clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionsList, transactionType, tryRetryCount, description);
+            runAddTransaction(scanner, transactionList, tryRetryCount, description);
             return;
         }
 
         clearInputBuffer(scanner);
-        transactionsList.add(createTransaction(amount, description));
+        transactionList.add(createTransaction(amount, description, transactionList.type));
         System.out.println("\nTransaction added successfully!");
         System.out.println("__________________\n");
     }
     
-    private static Map<String, Object> createTransaction(int amount, String description) {
-        Map<String, Object> transaction = new HashMap<>();
-            transaction.put("amount", amount);
-            transaction.put("description", description);
+    private static Transaction createTransaction(int amount, String description, String type) {
+        Transaction transaction = new Transaction(amount, description, type);
+            transaction.addAmount(amount);
+            transaction.addDescription(description);
         return transaction;
     }
 
-    private static int getTransactionTotal(ArrayList<Map<String, Object>> transactions) {
+    private static int getTransactionTotal(TransactionList transactions) {
         int total = 0;
-        for(Map<String, Object> transaction : transactions) {
-            total += (Integer) transaction.get("amount");
+        for(Transaction transaction : transactions.getAll()) {
+            total += (Integer) transaction.getAmount();
         }
         return total;
     }
