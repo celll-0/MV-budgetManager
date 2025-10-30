@@ -1,86 +1,362 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class App {
 
-    public static void main(String[] args) {
+    void main(String[] args) {
 
         TransactionList incomes = new TransactionList("income");
         TransactionList expenses = new TransactionList("expense");
+        Map<String, Object> resources = new HashMap<>();
+            resources.put("incomes", incomes);
+            resources.put("expenses", expenses);
 
         Scanner scanner = new Scanner(System.in);
-        boolean exit = false;
-        boolean first_run = true;
+        ConsoleMenuProcess consoleMenuProcess = new ConsoleMenuProcess(new Menu[]{
+                new MenuBuilder("main", scanner)
+                        .addOption("1", new FullBudgetSummaryOptionHandler())
+                        .addOption("2", new NextMenuOptionHandler("transaction").setTransactionType("incomes"))
+                        .addOption("3", new NextMenuOptionHandler("transaction").setTransactionType("expenses"))
+                        .addOption("4", new ExitProcOptionHandler(false))
+                        .setWelcomeMessage("\n\nWelcome to Buggi!")
+                        .setMenuLines(
+                                "_________________________________\n",
+                                "[1] Full budget summary",
+                                "[2] Incomes ->",
+                                "[3] Expenses ->",
+                                "[4] Quit"
+                        ).build(),
+                new MenuBuilder("transaction", scanner)
+                        .addOption("1", new AddTransactionOptionHandler())
+                        .addOption("2", new TransactionReportOptionHandler())
+                        .addOption("3", new ExitProcOptionHandler(true))
+                        .addOption("4", new ExitProcOptionHandler(false))
+                        .setMenuLines(
+                                "_{T_TYPE}S______________________\n",
+                                "[1] Add transaction",
+                                "[2] See report",
+                                "[3] Main menu",
+                                "[4] Exit"
+                        ).build()
+        });
+        consoleMenuProcess.run(resources);
+    }
 
-        ArrayList<MenuOption> mainMenuOptions = new ArrayList<>();
-            mainMenuOptions.add(new MenuOption("1", new FullBudgetSummaryHandler()));
-            mainMenuOptions.add(new MenuOption("2", new TransactionProcHandler("incomes")));
-            mainMenuOptions.add(new MenuOption("3", new TransactionProcHandler("expenses")));
-            mainMenuOptions.add(new MenuOption("4", new ExitProcHandler()));
-        MainMenu mainMenu = new MainMenu(mainMenuOptions, scanner);
+    /*
+    MAKE BUDGET OPERATIONS CLASS FOR MAIN FUNCTIONALITY (EVERYTHING CAN CONNECT ONCE YOU HAVE IT)
+    **SHOULD HAVE DONE THAT FIRST ---------------------------------------------------------------
+     */
 
-        while (!exit) {
-            String choice_main = mainMenu.runAndGetChoice();
-            if (mainMenu.first_run) mainMenu.markFirstRun();
-            switch (choice_main) {
-                case "1" -> {
-                    Map<String, Integer> summary = calculateSummary(incomes, expenses);
-                    printSummary(summary);
-                    runFullBudgetReportProc(scanner, incomes, expenses, 0);
+    public static class ConsoleMenuProcess {
+        private final Map<String, Menu> menus;
+        private Menu currentMenu = null;
+        public boolean exited = false;
+        private MenuBuilder MenuBuilder;
+
+        public ConsoleMenuProcess(Menu[] menus){
+            this.menus = new HashMap<>();
+            this.registerMenus(menus);
+            this.switchMenu("main");
+        }
+
+        public void run(Map<String, Object> resources){
+            while(!exited){
+                try {
+                    IMenuOptionHandler optionHandler = currentMenu.runProc(resources);
+                    Map<String, Object> handlerParams = optionHandler.getRequiredResources(resources);
+
+                    if (optionHandler instanceof NextMenuOptionHandler nextMenuHandler) {
+                        String nextMenuName = nextMenuHandler.menuName;
+                        switchMenu(nextMenuName);
+
+                        if (currentMenu.name.equals("transaction")) setActiveTransactionList(resources, nextMenuHandler);
+                        continue;
+                    }
+
+                    if (optionHandler instanceof ExitProcOptionHandler){
+                        if(((ExitProcOptionHandler) optionHandler).exitToMain){
+                            switchMenu("main");
+                        } else {
+                            exit();
+                        }
+                    }
+
+                    if(optionHandler.requiresScanner) handlerParams.put("scanner", currentMenu.getScanner());
+                    optionHandler.handle(handlerParams);
+                } catch(IllegalArgumentException e){
+                    continue;
                 }
-                case "2" -> {
-                    boolean exit_req = runTransactionProc(scanner, incomes);
-                    if(exit_req) exit = true;
-                }
-                case "3" -> {
-                    boolean exit_req = runTransactionProc(scanner, expenses);
-                    if(exit_req) exit = true;
-                }
-                case "4" -> exit = true;
-                default -> System.out.println("Invalid choice. Please choose from the following options");
             }
+        }
+
+        private void setActiveTransactionList(Map<String, Object> resources, NextMenuOptionHandler nextMenuHandler) {
+            String transactionType = nextMenuHandler.getTransactionType();
+            TransactionList transactionList = (TransactionList) resources.get(transactionType);
+            if (transactionList != null) resources.remove("transactionList");
+            resources.put("transactionList", transactionList);
+        }
+
+        public void registerMenus(Menu[] menuList){
+            for(Menu menu : menuList){
+                menus.put(menu.name, menu);
+            }
+        }
+
+        private void switchMenu(String menuName){
+            Menu nextMenu = menus.get(menuName);
+            if(currentMenu == null || !nextMenu.name.equals(currentMenu.name)){
+                currentMenu = nextMenu;
+            }
+        }
+
+        private void exit(){
+            exited = true;
         }
     }
 
-    public interface IMenuOptionHandler {
-        static void handle(Map<String, ?> args){
-            //  menu option specific handler logic
-        };
+    public static class BudgetOperations {
+
+        public static void printSummary(Map<String, Integer> summary) {
+            System.out.println("\n___________________________\n");
+            System.out.println("Summary: \n");
+            System.out.println(STR."Income: £\{summary.get("incomes")}");
+            System.out.println(STR."Expenses: £\{summary.get("expenses")}");
+            System.out.println(STR."Net: £\{summary.get("total")}");
+            System.out.println("\n___________________________\n");
+        }
+
+        public static void runFullBudgetReportProc(Scanner scanner, TransactionList incomes, TransactionList expenses) {
+            runFullBudgetReportProc(scanner, incomes, expenses, 0);
+        }
+
+        private static void runFullBudgetReportProc(Scanner scanner, TransactionList incomes, TransactionList expenses, int tryRetryCount) {
+            System.out.println("Would you like to see a full report? Answer yes(y)/no(n)");
+            String report_choice = scanner.nextLine();
+            switch (report_choice) {
+                case "y" -> {
+                    printTransactionReport(incomes);
+                    printTransactionReport(expenses);
+                }
+                case "n" -> {
+                    System.out.println("Exiting to main menu!");
+                }
+                default -> {
+                    if(tryRetryCount < 3) {
+                        tryRetryCount++;
+                        System.out.println("Invalid choice. Please choose from the following options");
+                        System.out.println("_________________________________");
+                        runFullBudgetReportProc(scanner, incomes, expenses, tryRetryCount);
+                    } else {
+                        System.out.println("Too many invalid attempts. Exiting to main menu...");
+                    }
+                }
+            }
+        }
+
+        public static Map<String, Integer> calculateSummary(TransactionList incomes, TransactionList expenses) {
+            Integer incomeSum = getTransactionTotal(incomes);
+            Integer expensesSum = getTransactionTotal(expenses);
+            Map<String, Integer> summary =  new HashMap<>();
+            summary.put("incomes", incomeSum);
+            summary.put("expenses", expensesSum);
+            summary.put("total", incomeSum - expensesSum);
+            return summary;
+        }
+
+        /**
+         * Adds a new transaction to the specified list with user input validation.
+         * This is a convenience method that calls the overloaded version with a default retry count of 0.
+         * Use as entry to point to add a new transaction over the overloaded, unless in special cases
+         * where offsetting the retry count is desired.
+         *
+         * @param scanner The Scanner object for reading user input
+         * @param transactionList The list to add the transaction to (incomes or expenses)
+         */
+        public static void runAddTransaction(Scanner scanner, TransactionList transactionList) {
+            runAddTransaction(scanner, transactionList, 0, "");
+        }
+
+        /**
+         * Adds a new transaction to the specified list with user input validation and recursive retry logic.
+         * Prompts the user for an amount and description. If the amount is invalid (zero or negative),
+         * the user is given up to 2 more attempts before returning to the menu.
+         * Use runAddTransaction parent function instead.
+         *
+         * @param scanner The Scanner object for reading user input
+         * @param transactionList The list to add the transaction to (incomes or expenses)
+         * @param tryRetryCount The current number of retry attempts (used for recursive validation)
+         * @param description The user description of the transaction
+         */
+        private static void runAddTransaction(Scanner scanner, TransactionList transactionList, int tryRetryCount, String description) {
+            System.out.println("_________________________________\n");
+            // Return to the previous menu once the maximum retry count is reached
+            if(tryRetryCount == 3) {
+                System.out.println("Too many invalid attempts. Exiting To menu...");
+                return;
+            }
+            // Preserve the origin user description in the case of a recursive call and do not request it again.
+
+            description = description.isBlank() ? "" : description;
+            if(tryRetryCount == 0) {
+                System.out.println("What was this for: ");
+                description = scanner.nextLine().trim();
+            }
+
+            int amount;
+            try {
+                System.out.println(STR."Enter \{transactionList.type} amount: ");
+                amount = scanner.nextInt();
+            } catch(InputMismatchException e){
+                // Attempt retry if the user enters a non-numeric value, clear the buffer and alert the user.
+                tryRetryCount++;
+                System.out.println("\nInvalid amount. Please enter a positive number");
+                clearInputBuffer(scanner);
+                runAddTransaction(scanner, transactionList, tryRetryCount, description);
+                return;
+            }
+
+            if(amount <= 0) {
+                // Attempt retry if the user enters a negative value, clear the buffer and alert the user.
+                tryRetryCount++;
+                if(tryRetryCount < 3) System.out.println("\nInvalid amount. Please enter a positive number");
+                clearInputBuffer(scanner);
+                runAddTransaction(scanner, transactionList, tryRetryCount, description);
+                return;
+            }
+
+            clearInputBuffer(scanner);
+            transactionList.add(createTransaction(amount, description, transactionList.type));
+            System.out.println("\nTransaction added successfully!");
+            System.out.println("\n_______________________________\n");
+        }
+
+        public static void printTransactionReport(TransactionList transactionList) {
+//        Make transactionType title case.
+            String transactionType = transactionList.type.substring(0,1).toUpperCase() + transactionList.type.substring(1).toLowerCase();
+            System.out.println("\n___________________________\n\n");
+            System.out.println(STR."\{transactionType} Report______________\n");
+//        Print out each transaction in amount-description format.
+            for(Transaction transaction : transactionList.getAll()) {
+                System.out.println(transaction.toString());
+                System.out.println("\n\n");
+            }
+        }
+
+        private static Transaction createTransaction(int amount, String description, String type) {
+            Transaction transaction = new Transaction(amount, description, type);
+            transaction.addAmount(amount);
+            transaction.addDescription(description);
+            return transaction;
+        }
+
+        private static int getTransactionTotal(TransactionList transactions) {
+            int total = 0;
+            for(Transaction transaction : transactions.getAll()) {
+                total += (Integer) transaction.getAmount();
+            }
+            return total;
+        }
     }
 
-    public static class FullBudgetSummaryHandler implements IMenuOptionHandler {
-        public static void handle(Map<String, ?> args){
+    public static abstract class IMenuOptionHandler {
+        protected String[] requiredParams;
+        public boolean requiresScanner = false;
+
+        public abstract void handle(Map<String, ?> args);
+
+        public Map<String, Object> getRequiredResources(Map<String, Object> menuResources){
+            return menuResources.entrySet().stream()
+                    .filter(resource -> {
+                        for(String param : requiredParams) {
+                            if(param.equals(resource.getKey())) return true;
+                        }
+                        return false;
+                    })
+                    .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                    ));
+        }
+    }
+
+    public static class TransactionReportOptionHandler extends IMenuOptionHandler{
+        public TransactionReportOptionHandler(){
+            this.requiredParams = new String[]{"transactionList"};
+        }
+
+        public void handle(Map<String, ?> args){
+            TransactionList transactionList = (TransactionList) args.get("transactionList");
+            BudgetOperations.printTransactionReport(transactionList);
+        }
+    }
+
+    public static class AddTransactionOptionHandler extends IMenuOptionHandler {
+        public AddTransactionOptionHandler(){
+            this.requiredParams = new String[]{"transactionList", "scanner"};
+            this.requiresScanner = true;
+        }
+
+        public void handle(Map<String, ?> args){
+            TransactionList transactionList = (TransactionList) args.get("transactionList");
+            Scanner scanner = (Scanner) args.get("scanner");
+            BudgetOperations.runAddTransaction(scanner, transactionList);
+        }
+    }
+
+    public static class FullBudgetSummaryOptionHandler extends IMenuOptionHandler {
+        public FullBudgetSummaryOptionHandler(){
+            this.requiredParams = new String[]{"incomes", "expenses", "scanner"};
+            this.requiresScanner = true;
+        }
+
+        public void handle(Map<String, ?> args){
             TransactionList incomes = (TransactionList) args.get("incomes");
             TransactionList expenses = (TransactionList) args.get("expenses");
             Scanner scanner = (Scanner) args.get("scanner");
 
-            Map<String, Integer> summary = calculateSummary(incomes, expenses);
-            printSummary(summary);
-            runFullBudgetReportProc(scanner, incomes, expenses, 0);
+            Map<String, Integer> summary = BudgetOperations.calculateSummary(incomes, expenses);
+            BudgetOperations.printSummary(summary);
+            BudgetOperations.runFullBudgetReportProc(scanner, incomes, expenses, 0);
         }
     }
 
-    public static class TransactionProcHandler implements IMenuOptionHandler {
-        public final String transactionType;
-        public TransactionProcHandler(String transactionType) {
-            super();
-            this.transactionType = transactionType;
+    public static class NextMenuOptionHandler extends IMenuOptionHandler {
+        public final String menuName;
+        private String transactionType;
+        private boolean requiresTransactionList;
+
+        public NextMenuOptionHandler(String menuName){
+            this.requiredParams = new String[]{"transactionList", "scanner"};
+            this.menuName = menuName;
         }
 
-        public static void handle(Map<String, ?> args){
-            TransactionList transactionList = (TransactionList) args.get("transactionList");
-            Scanner scanner = (Scanner) args.get("scanner");
-            runTransactionProc(scanner, transactionList);
+        public void handle(Map<String, ?> args){
+            System.out.println("\n\n");
+        }
+
+        public IMenuOptionHandler setTransactionType(String type){
+            transactionType = type;
+            requiresTransactionList = true;
+            return this;
+        }
+
+        public String getTransactionType(){
+            return transactionType;
         }
     }
 
-    public static class ExitProcHandler implements IMenuOptionHandler {
-        public static void handle(Map<String, ?> args){
-            System.out.println("Exiting to main menu...");
+    public static class ExitProcOptionHandler extends IMenuOptionHandler {
+        public final boolean exitToMain;
+
+        public ExitProcOptionHandler(boolean exitToMain){
+            this.requiredParams = new String[0];
+            this.exitToMain = exitToMain;
+        }
+
+        public void handle(Map<String, ?> args){
+            System.out.println(exitToMain ? "Returning to main menu..." : "Exiting...");
         }
     }
-
-
-
 
 
     public interface IMenuOption {
@@ -101,12 +377,22 @@ public class App {
         }
     }
 
-    abstract private static class Menu {
-        private final ArrayList<MenuOption> options;
 
-        public Menu(ArrayList<MenuOption> options) {
+    public static abstract class Menu {
+        private final ArrayList<MenuOption> options;
+        protected final Scanner scanner;
+        protected boolean exit = false;
+        public final String name;
+
+        public Menu(ArrayList<MenuOption> options, Scanner scanner, String name) {
             this.options = options;
+            this.scanner = scanner;
+            this.name = name;
         }
+
+        public abstract String getMenuText();
+
+        protected abstract void updateMenuState();
 
         public IMenuOptionHandler getOptionHandler(String optionKey){
             if(optionKey == null) return null;
@@ -119,21 +405,40 @@ public class App {
             return handler;
         }
 
-        abstract public String runAndGetChoice();
-
-        private String getMenuText(){
-            return "";
+        public IMenuOptionHandler runProc(Map<String, Object> menuParams){
+            String userSelection = runAndGetChoice();
+            System.out.println("\n\n");
+            if(!isNumeric(userSelection) || !isInOptionRange(userSelection, options)){
+//                  Flag invalid input and warn the user.
+                System.out.println("Invalid choice. Please choose from the following options");
+                throw new IllegalArgumentException(("Invalid selection made menu " + name)); // Throw an exception to catch in consoleProc and continue the loop there.
+            }
+            IMenuOptionHandler optionHandler = getOptionHandler(userSelection);
+            updateMenuState();
+            return optionHandler;
         };
-    }
 
-    public static class MainMenu extends Menu {
-        private boolean first_run;
-        private final Scanner scanner;
+        public String[] getMenuOptionTextList(){
+            String menuText = getMenuText();
+            return Arrays.stream(menuText.split("\n"))
+                    .dropWhile(line -> !line.trim().matches("_+"))  // Drop until we find the divider
+                    .skip(1)
+                    .filter(line -> !line.trim().matches("_+"))
+                    .toArray(String[]::new);
+        }
 
-        public MainMenu(ArrayList<MenuOption> options, Scanner scanner) {
-            super(options);
-            this.scanner = scanner;
-            this.first_run = true;
+        private static boolean isInOptionRange(String userSelection, ArrayList<MenuOption> options){
+            int selectionAsNumeric = Integer.parseInt(userSelection);
+            return selectionAsNumeric <= options.size();
+        }
+
+        private static boolean isNumeric(String userSelection) {
+            try {
+                Double.parseDouble(userSelection);
+                return true;
+            } catch(NumberFormatException e){
+                return false;
+            }
         }
 
         public String runAndGetChoice() {
@@ -142,24 +447,99 @@ public class App {
             return scanner.nextLine();
         }
 
+        protected void exitProc(){
+            exit = true;
+        };
 
-        private String getMenuText(){
-            if (first_run) {
-                System.out.println("\n\nWelcome to Buggi!");
-            }
-            ArrayList<String> lines = new ArrayList<String>();
-            lines.add("_________________________________");
-            lines.add("[1] Full budget summary");
-            lines.add("[2] Incomes ->");
-            lines.add("[3] Expenses ->");
-            lines.add("[4] Quit");
-            return String.join("\n", lines);
-        }
-
-        public void markFirstRun(){
-            first_run = false;
+        public Scanner getScanner(){
+            return scanner;
         }
     }
+
+    public static class MenuBuilder {
+        private final String name;
+        private final ArrayList<MenuOption> options = new ArrayList<>();
+        private final Scanner scanner;
+        private String[] menuLines;
+        private String welcomeMessage;
+        private boolean hasWelcome = false;
+
+        public MenuBuilder(String name, Scanner scanner) {
+            this.name = name;
+            this.scanner = scanner;
+        }
+
+        public MenuBuilder addOption(String key, IMenuOptionHandler handler) {
+            this.options.add(new MenuOption(key, handler));
+            return this;
+        }
+
+        public MenuBuilder setMenuLines(String... lines) {
+            this.menuLines = lines;
+            return this;
+        }
+
+        public MenuBuilder setWelcomeMessage(String message) {
+            this.welcomeMessage = message;
+            this.hasWelcome = true;
+            return this;
+        }
+
+        public Menu build() {
+            return new GenericMenu(name, options, scanner, menuLines, welcomeMessage, hasWelcome);
+        }
+    }
+
+    // Generic Menu class that can represent any menu
+    public static class GenericMenu extends Menu {
+        private final String[] menuLines;
+        private final String welcomeMessage;
+        private boolean firstRun;
+        private String transactionType;
+
+        public GenericMenu(String name, ArrayList<MenuOption> options, Scanner scanner,
+                           String[] menuLines, String welcomeMessage, boolean hasWelcome) {
+            super(options, scanner, name);
+            this.menuLines = menuLines;
+            this.welcomeMessage = welcomeMessage;
+            this.firstRun = hasWelcome;
+            this.transactionType = null;
+        }
+
+        @Override
+        public String getMenuText() {
+            String menuText = String.join("\n", menuLines);
+            if (firstRun && welcomeMessage != null) {
+                return welcomeMessage + "\n" + menuText;
+            }
+
+            if(name.equals("transaction") && transactionType != null) {
+                menuText = menuText.replace("{T_TYPE}", transactionType.toUpperCase());
+            }
+            return menuText;
+        }
+
+        @Override
+        protected void updateMenuState() {
+            if (firstRun) firstRun = false;
+        }
+
+        @Override
+        public IMenuOptionHandler runProc(Map<String, Object> args){
+            if(name.equals("transaction")){
+                TransactionList transactionList = (TransactionList) args.get("transactionList");
+                setType(transactionList.type);
+            }
+            return super.runProc(args);
+        }
+
+        public void setType(String type){
+            transactionType = type;
+        }
+    }
+
+
+
 
 
     public static class TransactionList {
@@ -187,6 +567,10 @@ public class App {
             int lastIndex = this.transactions.size() - 1;
             this.transactions.remove(lastIndex);
         }
+
+        public int size(){
+            return this.transactions.size();
+        }
     }
 
     public static class Transaction {
@@ -209,7 +593,7 @@ public class App {
         }
 
         public void addAmount(int amount){
-            this.amount += amount;
+            this.amount = amount;
         }
 
         public void addDescription(String value){
@@ -221,185 +605,6 @@ public class App {
             String descriptionLine = STR."---> Desc: \{this.description}";
             return amountLine + "\n" + descriptionLine;
         }
-    }
-
-    private static String printMainMenuForInput(Scanner scanner, boolean first_run) {
-        if (first_run) {
-            System.out.println("\n\nWelcome to Buggi!");
-        }
-        System.out.println("\n_________________________________\n");
-        System.out.println("[1] Full budget summary");
-        System.out.println("[2] Incomes ->");
-        System.out.println("[3] Expenses ->");
-        System.out.println("[4] Quit");
-        return scanner.nextLine();
-    }
-
-    private static String printTransactionMenuForInput(Scanner scanner, String transactionType) {
-        System.out.println("_________________________________\n");
-        System.out.println(STR."[1] Add \{transactionType} transaction");
-        System.out.println(STR."[2] See \{transactionType} report");
-        System.out.println("[3] Main menu");
-        System.out.println("[4] Exit");
-        return scanner.nextLine();
-    }
-
-    private static void printTransactionReport(TransactionList transactionList) {
-//        Make transactionType title case.
-        String transactionType = transactionList.type.substring(0,1).toUpperCase() + transactionList.type.substring(1).toLowerCase();
-        System.out.println("\n___________________________\n\n");
-        System.out.println(STR."\{transactionType} Report______________\n");
-//        Print out each transaction in amount-description format.
-        for(Transaction transaction : transactionList.getAll()) {
-            System.out.println(transaction.toString());
-            System.out.println("\n\n");
-        }
-    }
-
-    private static void printSummary(Map<String, Integer> summary) {
-        System.out.println("\n___________________________\n");
-        System.out.println("Summary: \n");
-        System.out.println(STR."Income: £\{summary.get("incomes")}");
-        System.out.println(STR."Expenses: £\{summary.get("expenses")}");
-        System.out.println(STR."Net: £\{summary.get("total")}");
-        System.out.println("\n___________________________\n");
-    }
-
-    private static boolean runTransactionProc(Scanner scanner, TransactionList transactionList){
-        boolean exit = false;
-        boolean exit_main_proc = false;
-        while (!exit) {
-            String choice_expenses = printTransactionMenuForInput(scanner, transactionList.type);
-            switch (choice_expenses) {
-                case "1" -> runAddTransaction(scanner, transactionList);
-                case "2" -> printTransactionReport(transactionList);
-                case "3" -> {
-                    exit = true;
-                }
-                case "4" -> {
-                    exit_main_proc = true;
-                    exit = true;
-                }
-                default -> System.out.println("Invalid choice. Please choose from the following options");
-            }
-        }
-        return exit_main_proc;
-    }
-
-    public static void runFullBudgetReportProc(Scanner scanner, TransactionList incomes, TransactionList expenses, int tryRetryCount) {
-        System.out.println("Would you like to see a full report? Answer yes(y)/no(n)");
-        String report_choice = scanner.nextLine();
-        switch (report_choice) {
-            case "y" -> {
-                printTransactionReport(incomes);
-                printTransactionReport(expenses);
-            }
-            case "n" -> {
-                System.out.println("Exiting to main menu!");
-            }
-            default -> {
-                if(tryRetryCount < 3) {
-                    tryRetryCount++;
-                    System.out.println("Invalid choice. Please choose from the following options");
-                    System.out.println("_________________________________");
-                    runFullBudgetReportProc(scanner, incomes, expenses, tryRetryCount);
-                } else {
-                    System.out.println("Too many invalid attempts. Exiting to main menu...");
-                }
-            }
-        }
-    }
-
-    private static Map<String, Integer> calculateSummary(TransactionList incomes, TransactionList expenses) {
-        Integer incomeSum = getTransactionTotal(incomes);
-        Integer expensesSum = getTransactionTotal(expenses);
-        Map<String, Integer> summary =  new HashMap<>();
-            summary.put("incomes", incomeSum);
-            summary.put("expenses", expensesSum);
-            summary.put("total", incomeSum - expensesSum);
-        return summary;
-    }
-
-    /**
-     * Adds a new transaction to the specified list with user input validation.
-     * This is a convenience method that calls the overloaded version with a default retry count of 0.
-     * Use as entry to point to add a new transaction over the overloaded, unless in special cases
-     * where offsetting the retry count is desired.
-     *
-     * @param scanner The Scanner object for reading user input
-     * @param transactionList The list to add the transaction to (incomes or expenses)
-     */
-    private static void runAddTransaction(Scanner scanner, TransactionList transactionList) {
-        runAddTransaction(scanner, transactionList, 0, "");
-    }
-
-    /**
-     * Adds a new transaction to the specified list with user input validation and recursive retry logic.
-     * Prompts the user for an amount and description. If the amount is invalid (zero or negative),
-     * the user is given up to 2 more attempts before returning to the menu.
-     * Use runAddTransaction parent function instead.
-     *
-     * @param scanner The Scanner object for reading user input
-     * @param transactionList The list to add the transaction to (incomes or expenses)
-     * @param tryRetryCount The current number of retry attempts (used for recursive validation)
-     * @param description The user description of the transaction
-     */
-    private static void runAddTransaction(Scanner scanner, TransactionList transactionList, int tryRetryCount, String description) {
-        System.out.println("_________________________________\n");
-        // Return to the previous menu once the maximum retry count is reached
-        if(tryRetryCount == 3) {
-            System.out.println("Too many invalid attempts. Exiting To menu...");
-            return;
-        }
-        // Preserve the origin user description in the case of a recursive call and do not request it again.
-
-        description = description.isBlank() ? "" : description;
-        if(tryRetryCount == 0) {
-            System.out.println("What was this for: ");
-            description = scanner.nextLine().trim();
-        }
-
-        int amount;
-        try {
-            System.out.println(STR."Enter \{transactionList.type} amount: ");
-            amount = scanner.nextInt();
-        } catch(InputMismatchException e){
-            // Attempt retry if the user enters a non-numeric value, clear the buffer and alert the user.
-            tryRetryCount++;
-            System.out.println("\nInvalid amount. Please enter a positive number");
-            clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionList, tryRetryCount, description);
-            return;
-        }
-
-        if(amount <= 0) {
-            // Attempt retry if the user enters a negative value, clear the buffer and alert the user.
-            tryRetryCount++;
-            if(tryRetryCount < 3) System.out.println("\nInvalid amount. Please enter a positive number");
-            clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionList, tryRetryCount, description);
-            return;
-        }
-
-        clearInputBuffer(scanner);
-        transactionList.add(createTransaction(amount, description, transactionList.type));
-        System.out.println("\nTransaction added successfully!");
-        System.out.println("__________________\n");
-    }
-    
-    private static Transaction createTransaction(int amount, String description, String type) {
-        Transaction transaction = new Transaction(amount, description, type);
-            transaction.addAmount(amount);
-            transaction.addDescription(description);
-        return transaction;
-    }
-
-    private static int getTransactionTotal(TransactionList transactions) {
-        int total = 0;
-        for(Transaction transaction : transactions.getAll()) {
-            total += (Integer) transaction.getAmount();
-        }
-        return total;
     }
 
     private static void clearInputBuffer(Scanner scanner) {
