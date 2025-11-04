@@ -14,3 +14,7 @@ Project structure follows standard java-maven layout with the `pom.xml` config f
 The source directory has two subdirectories:
 - `main/` - containing the java application code and logic
 - `test/` - contains automated test that can be run as part of a build process, at runtime and whenever else they are needed.
+
+### Upcoming features:
+
+- transaction reports organised by date and time into upcoming transaction and outstanding transactions.
