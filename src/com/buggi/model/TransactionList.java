@@ -1,6 +1,14 @@
 package com.buggi.model;
 
+import java.lang.reflect.Array;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class TransactionList {
     private final ArrayList<Transaction> transactions;
@@ -31,4 +39,20 @@ public class TransactionList {
     public int size(){
         return this.transactions.size();
     }
+
+    public ArrayList<Transaction> getUpcoming(){
+        ArrayList<Transaction> upcoming = transactions.stream().filter(transactionDateUpcomingFilter)
+                .collect(Collectors.toCollection(ArrayList::new));
+        return upcoming;
+    }
+    public ArrayList<Transaction> getOutstanding(){
+        ArrayList<Transaction> outstanding = transactions.stream().filter(transactionDateOutstandingFilter)
+                .collect(Collectors.toCollection(ArrayList::new));
+        return outstanding;
+    }
+
+    private final Supplier<ZonedDateTime> today = () -> ZonedDateTime.from(LocalDate.now(ZoneId.systemDefault()));
+    private final Predicate<Transaction> transactionDateOutstandingFilter = transaction -> transaction.getDate().isBefore(today.get());
+    private final Predicate<Transaction> transactionDateUpcomingFilter = transaction -> transaction.getDate().isAfter(today.get());
 }
+

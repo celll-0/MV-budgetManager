@@ -1,9 +1,10 @@
 package com.buggi.consoleUi;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
+import java.util.*;
 import java.util.stream.Collectors;
+
 
 import com.buggi.menus.Menu;
 import com.buggi.menus.MenuOption.*;
@@ -51,9 +52,7 @@ public class ConsoleProcess {
                     }
                 }
 
-                if (Arrays.asList(optionHandler.getHandlerDependencyNames()).contains("scanner")){
-                    handlerParams.put("scanner", currentMenu.getScanner());
-                }
+                handlerParams = fulfillHandlerDependencyRequirements(resources, optionHandler);
                 optionHandler.handle(handlerParams);
             } catch(IllegalArgumentException e){
                 continue;
@@ -93,6 +92,12 @@ public class ConsoleProcess {
         if(currentMenu == null || !nextMenu.name.equals(currentMenu.name)){
             currentMenu = nextMenu;
         }
+    }
+
+    private Map<String, Object> fulfillHandlerDependencyRequirements(Map<String, Object> handlerResources, IMenuOptionHandler handler){
+        List<String> handlerDependencyNames = Arrays.asList(handler.getHandlerDependencyNames());
+        if (handlerDependencyNames.contains("scanner")) handlerResources.put("scanner", currentMenu.getScanner());
+        return handlerResources;
     }
 
     private void exit(){ exited = true; }

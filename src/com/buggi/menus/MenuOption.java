@@ -2,6 +2,7 @@ package com.buggi.menus;
 
 import com.buggi.service.BudgetOperations;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Scanner;
 import com.buggi.model.TransactionList;
@@ -27,7 +28,7 @@ public class MenuOption {
     }
 
     public static class AddTransactionOption implements IMenuOptionHandler {
-        private final String[] requiredParams = new String[]{"transactionList", "scanner"};
+        private final String[] requiredParams = new String[]{"transactionList", "scanner", "formatter"};
 
         @Override
         public String[] getHandlerDependencyNames() { return requiredParams; }
@@ -36,6 +37,7 @@ public class MenuOption {
         public void handle(Map<String, ?> args){
             TransactionList transactionList = (TransactionList) args.get("transactionList");
             Scanner scanner = (Scanner) args.get("scanner");
+            DateTimeFormatter formatter = (DateTimeFormatter) args.get("formatter");
             BudgetOperations.runAddTransaction(scanner, transactionList);
         }
     }

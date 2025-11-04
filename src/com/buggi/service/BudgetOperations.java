@@ -1,5 +1,8 @@
 package com.buggi.service;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Map;
@@ -7,10 +10,10 @@ import java.util.Scanner;
 
 import com.buggi.model.TransactionList;
 import com.buggi.model.Transaction;
+import com.buggi.utils.Validation;
 
 
 public class BudgetOperations {
-
     public static void printSummary(Map<String, Integer> summary) {
         System.out.println("\n___________________________\n");
         System.out.println("Summary: \n");
@@ -68,7 +71,7 @@ public class BudgetOperations {
      * @param transactionList The list to add the transaction to (incomes or expenses)
      */
     public static void runAddTransaction(Scanner scanner, TransactionList transactionList) {
-        runAddTransaction(scanner, transactionList, 0, "");
+        runAddTransaction(scanner, transactionList, 0, "", "");
     }
 
     /**
@@ -82,7 +85,7 @@ public class BudgetOperations {
      * @param tryRetryCount The current number of retry attempts (used for recursive validation)
      * @param description The user description of the transaction
      */
-    private static void runAddTransaction(Scanner scanner, TransactionList transactionList, int tryRetryCount, String description) {
+    private static void runAddTransaction(Scanner scanner, TransactionList transactionList, int tryRetryCount, String description, String dateString) {
         System.out.println("_________________________________\n");
         // Return to the previous menu once the maximum retry count is reached
         if(tryRetryCount == 3) {
@@ -97,6 +100,24 @@ public class BudgetOperations {
             description = scanner.nextLine().trim();
         }
 
+
+        dateString = dateString == null || dateString.trim().isBlank() ? "" : dateString;
+        if(dateString.trim().isBlank()){
+            try {
+                System.out.println("Enter date of transaction (in format 'YYYY-MM-DD'): ");
+                dateString = scanner.nextLine().trim();
+                if(!Validation.isValidIsoDate(dateString)){
+                    throw new InputMismatchException("Invalid date format: '" + dateString + "'. Expected format: YYYY-MM-DD");
+                }
+            } catch(InputMismatchException e){
+                // Attempt retry if the user enter a non-numerical value, clear the buffer and alert the user.
+                tryRetryCount++;
+                System.out.println(e.getMessage());
+                clearInputBuffer(scanner);
+                runAddTransaction(scanner, transactionList, tryRetryCount, description, null);
+            }
+        }
+
         int amount;
         try {
             System.out.println(STR."Enter \{transactionList.type} amount: ");
@@ -106,7 +127,7 @@ public class BudgetOperations {
             tryRetryCount++;
             System.out.println("\nInvalid amount. Please enter a positive number");
             clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionList, tryRetryCount, description);
+            runAddTransaction(scanner, transactionList, tryRetryCount, description, dateString);
             return;
         }
 
@@ -115,12 +136,12 @@ public class BudgetOperations {
             tryRetryCount++;
             if(tryRetryCount < 3) System.out.println("\nInvalid amount. Please enter a positive number");
             clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionList, tryRetryCount, description);
+            runAddTransaction(scanner, transactionList, tryRetryCount, description, dateString);
             return;
         }
 
         clearInputBuffer(scanner);
-        transactionList.add(createTransaction(amount, description, transactionList.type));
+        transactionList.add(createTransaction(amount, description, transactionList.type, dateString));
         System.out.println("\nTransaction added successfully!");
         System.out.println("\n_______________________________\n");
     }
@@ -137,10 +158,11 @@ public class BudgetOperations {
         }
     }
 
-    private static Transaction createTransaction(int amount, String description, String type) {
+    private static Transaction createTransaction(int amount, String description, String type, String dateString) {
         Transaction transaction = new Transaction(amount, description, type);
         transaction.addAmount(amount);
         transaction.addDescription(description);
+        transaction.addDate(dateString);
         return transaction;
     }
 
