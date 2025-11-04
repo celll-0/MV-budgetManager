@@ -14,10 +14,10 @@ public class App {
         Scanner scanner = new Scanner(System.in);
         ConsoleMenuProcess consoleMenuProcess = new ConsoleMenuProcess(new Menu[]{
                 new MenuBuilder("main", scanner)
-                        .addOption("1", new FullBudgetSummaryOptionHandler())
-                        .addOption("2", new NextMenuOptionHandler("transaction").setTransactionType("incomes"))
-                        .addOption("3", new NextMenuOptionHandler("transaction").setTransactionType("expenses"))
-                        .addOption("4", new ExitProcOptionHandler(false))
+                        .addOption("1", new FullBudgetSummaryOption())
+                        .addOption("2", new NextMenuOption("transaction").setTransactionType("incomes"))
+                        .addOption("3", new NextMenuOption("transaction").setTransactionType("expenses"))
+                        .addOption("4", new ExitProcOption(false))
                         .setWelcomeMessage("\n\nWelcome to Buggi!")
                         .setMenuLines(
                                 "_________________________________\n",
@@ -27,10 +27,10 @@ public class App {
                                 "[4] Quit"
                         ).build(),
                 new MenuBuilder("transaction", scanner)
-                        .addOption("1", new AddTransactionOptionHandler())
-                        .addOption("2", new TransactionReportOptionHandler())
-                        .addOption("3", new ExitProcOptionHandler(true))
-                        .addOption("4", new ExitProcOptionHandler(false))
+                        .addOption("1", new AddTransactionOption())
+                        .addOption("2", new TransactionReportOption())
+                        .addOption("3", new ExitProcOption(true))
+                        .addOption("4", new ExitProcOption(false))
                         .setMenuLines(
                                 "_{T_TYPE}S______________________\n",
                                 "[1] Add transaction",
@@ -65,7 +65,7 @@ public class App {
                     IMenuOptionHandler optionHandler = currentMenu.runProc();
                     Map<String, Object> handlerParams = getRequiredResources(resources, optionHandler.getHandlerDependencyNames());
 
-                    if (optionHandler instanceof NextMenuOptionHandler nextMenuHandler) {
+                    if (optionHandler instanceof NextMenuOption nextMenuHandler) {
                         String nextMenuName = nextMenuHandler.menuName;
                         switchMenu(nextMenuName);
 
@@ -78,8 +78,8 @@ public class App {
                         continue;
                     }
 
-                    if (optionHandler instanceof ExitProcOptionHandler) {
-                        if (((ExitProcOptionHandler) optionHandler).exitToMain) {
+                    if (optionHandler instanceof ExitProcOption) {
+                        if (((ExitProcOption) optionHandler).exitToMain) {
                             switchMenu("main");
                         } else {
                             exit();
@@ -96,7 +96,7 @@ public class App {
             }
         }
 
-        private void setActiveTransactionList(Map<String, Object> resources, NextMenuOptionHandler nextMenuHandler) {
+        private void setActiveTransactionList(Map<String, Object> resources, NextMenuOption nextMenuHandler) {
             String transactionType = nextMenuHandler.getTransactionType();
             TransactionList transactionList = (TransactionList) resources.get(transactionType);
             if (transactionList != null) resources.remove("transactionList");
@@ -175,6 +175,8 @@ public class App {
         }
 
         public static Map<String, Integer> calculateSummary(TransactionList incomes, TransactionList expenses) {
+            System.out.println(STR."Incomes List \{incomes.getAll()}\n");
+            System.out.println(STR."Expenses List \{expenses.getAll()}\n");
             Integer incomeSum = getTransactionTotal(incomes);
             Integer expensesSum = getTransactionTotal(expenses);
             Map<String, Integer> summary =  new HashMap<>();
@@ -284,7 +286,7 @@ public class App {
         void handle(Map<String, ?> args);
     }
 
-    public static class TransactionReportOptionHandler implements IMenuOptionHandler{
+    public static class TransactionReportOption implements IMenuOptionHandler{
         private final String[] requiredParams = new String[]{"transactionList"};
 
         @Override
@@ -297,7 +299,7 @@ public class App {
         }
     }
 
-    public static class AddTransactionOptionHandler implements IMenuOptionHandler {
+    public static class AddTransactionOption implements IMenuOptionHandler {
         private final String[] requiredParams = new String[]{"transactionList", "scanner"};
 
         @Override
@@ -311,7 +313,7 @@ public class App {
         }
     }
 
-    public static class FullBudgetSummaryOptionHandler implements IMenuOptionHandler {
+    public static class FullBudgetSummaryOption implements IMenuOptionHandler {
         private final String[] requiredParams = new String[]{"incomes", "expenses", "scanner"};
 
         @Override
@@ -329,12 +331,12 @@ public class App {
         }
     }
 
-    public static class NextMenuOptionHandler implements IMenuOptionHandler {
+    public static class NextMenuOption implements IMenuOptionHandler {
         private final String[] requiredParams = new String[]{"transactionList", "scanner"};
         public final String menuName;
         private String transactionType;
 
-        public NextMenuOptionHandler(String menuName){ this.menuName = menuName; }
+        public NextMenuOption(String menuName){ this.menuName = menuName; }
 
         public IMenuOptionHandler setTransactionType(String type){
             transactionType = type;
@@ -352,11 +354,11 @@ public class App {
 
     }
 
-    public static class ExitProcOptionHandler implements IMenuOptionHandler {
+    public static class ExitProcOption implements IMenuOptionHandler {
         private final String[] requiredParams = new String[0];
         public final boolean exitToMain;
 
-        public ExitProcOptionHandler(boolean exitToMain){ this.exitToMain = exitToMain; }
+        public ExitProcOption(boolean exitToMain){ this.exitToMain = exitToMain; }
 
         @Override
         public String[] getHandlerDependencyNames() { return requiredParams; }
@@ -368,32 +370,13 @@ public class App {
     }
 
 
-    public interface IMenuOption {
-        IMenuOptionHandler getHandler();
-    }
-
-    public static class MenuOption implements IMenuOption {
-        public final String key;
-        private final IMenuOptionHandler optionHandler;
-
-        public MenuOption(String optionKey, IMenuOptionHandler optionHandler) {
-            this.key = optionKey;
-            this.optionHandler = optionHandler;
-        }
-
-        public IMenuOptionHandler getHandler() {
-            return this.optionHandler;
-        }
-    }
-
-
     public static abstract class Menu {
-        private final ArrayList<MenuOption> options;
+        private final Map<String, IMenuOptionHandler> options;
         protected final Scanner scanner;
         protected boolean exit = false;
         public final String name;
 
-        public Menu(ArrayList<MenuOption> options, Scanner scanner, String name) {
+        public Menu(Map<String, IMenuOptionHandler> options, Scanner scanner, String name) {
             this.options = options;
             this.scanner = scanner;
             this.name = name;
@@ -405,13 +388,7 @@ public class App {
 
         public IMenuOptionHandler getOptionHandler(String optionKey){
             if(optionKey == null) return null;
-            IMenuOptionHandler handler = null;
-            for(MenuOption option : options) {
-                if(option.key.equals(optionKey)){
-                    handler = option.getHandler();
-                }
-            }
-            return handler;
+            return options.get(optionKey);
         }
 
         public IMenuOptionHandler runProc(){
@@ -436,7 +413,7 @@ public class App {
                     .toArray(String[]::new);
         }
 
-        private static boolean isInOptionRange(String userSelection, ArrayList<MenuOption> options){
+        private static boolean isInOptionRange(String userSelection, Map<String, IMenuOptionHandler> options){
             int selectionAsNumeric = Integer.parseInt(userSelection);
             return selectionAsNumeric <= options.size();
         }
@@ -456,10 +433,6 @@ public class App {
             return scanner.nextLine();
         }
 
-        protected void exitProc(){
-            exit = true;
-        };
-
         public Scanner getScanner(){
             return scanner;
         }
@@ -467,7 +440,7 @@ public class App {
 
     public static class MenuBuilder {
         private final String name;
-        private final ArrayList<MenuOption> options = new ArrayList<>();
+        private final Map<String, IMenuOptionHandler> options = new HashMap<String, IMenuOptionHandler>();
         private final Scanner scanner;
         private String[] menuLines;
         private String welcomeMessage;
@@ -479,7 +452,7 @@ public class App {
         }
 
         public MenuBuilder addOption(String key, IMenuOptionHandler handler) {
-            this.options.add(new MenuOption(key, handler));
+            options.put(key, handler);
             return this;
         }
 
@@ -508,7 +481,7 @@ public class App {
         private boolean firstRun;
         private String transactionType;
 
-        public GenericMenu(String name, ArrayList<MenuOption> options, Scanner scanner,
+        public GenericMenu(String name, Map<String, IMenuOptionHandler> options, Scanner scanner,
                            String[] menuLines, String welcomeMessage, boolean hasWelcome) {
             super(options, scanner, name);
             this.menuLines = menuLines;
