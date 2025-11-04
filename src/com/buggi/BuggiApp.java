@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 import com.buggi.menus.MenuOption.*;
 import com.buggi.model.TransactionList;
-import com.buggi.consoleUi.ConsoleMenu;
+import com.buggi.consoleUi.ConsoleProcess;
 import com.buggi.service.MenuBuilder;
 import com.buggi.menus.Menu;
 
@@ -20,7 +20,7 @@ public class BuggiApp {
         resources.put("expenses", expenses);
 
         Scanner scanner = new Scanner(System.in);
-        ConsoleMenu consoleMenuProcess = new ConsoleMenu(new Menu[]{
+        ConsoleProcess consoleMenuProcess = new ConsoleProcess(new Menu[]{
                 new MenuBuilder("main", scanner)
                         .addOption("1", new FullBudgetSummaryOption())
                         .addOption("2", new NextMenuOption("transaction").setTransactionType("incomes"))

@@ -12,13 +12,13 @@ import com.buggi.service.MenuBuilder;
 import com.buggi.model.TransactionList;
 
 
-public class ConsoleMenu {
+public class ConsoleProcess {
     private final Map<String, Menu> menus;
     private Menu currentMenu = null;
-    public boolean exited = false;
+    private boolean exited = false;
     private MenuBuilder MenuBuilder;
 
-    public ConsoleMenu(Menu[] menus){
+    public ConsoleProcess(Menu[] menus){
         this.menus = new HashMap<>();
         this.registerMenus(menus);
         this.switchMenu("main");
@@ -61,20 +61,20 @@ public class ConsoleMenu {
         }
     }
 
-    private void setActiveTransactionList(Map<String, Object> resources, NextMenuOption nextMenuHandler) {
+    private static void setActiveTransactionList(Map<String, Object> resources, NextMenuOption nextMenuHandler) {
         String transactionType = nextMenuHandler.getTransactionType();
         TransactionList transactionList = (TransactionList) resources.get(transactionType);
         if (transactionList != null) resources.remove("transactionList");
         resources.put("transactionList", transactionList);
     }
 
-    public void registerMenus(Menu[] menuList){
+    private void registerMenus(Menu[] menuList){
         for(Menu menu : menuList){
             menus.put(menu.name, menu);
         }
     }
 
-    private Map<String, Object> getRequiredResources(Map<String, Object> menuResources, String[] requiredResourceNames){
+    private static Map<String, Object> getRequiredResources(Map<String, Object> menuResources, String[] requiredResourceNames){
         return menuResources.entrySet().stream()
                 .filter(resource -> {
                     for(String param : requiredResourceNames) {
@@ -95,7 +95,5 @@ public class ConsoleMenu {
         }
     }
 
-    private void exit(){
-        exited = true;
-    }
+    private void exit(){ exited = true; }
 }

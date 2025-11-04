@@ -7,7 +7,6 @@ import java.util.Scanner;
 import com.buggi.model.TransactionList;
 
 
-
 public class MenuOption {
     public interface IMenuOptionHandler {
         String[] getHandlerDependencyNames();
@@ -55,7 +54,7 @@ public class MenuOption {
 
             Map<String, Integer> summary = BudgetOperations.calculateSummary(incomes, expenses);
             BudgetOperations.printSummary(summary);
-            BudgetOperations.runFullBudgetReportProc(scanner, incomes, expenses, 0);
+            BudgetOperations.runFullBudgetReportProc(scanner, incomes, expenses);
         }
     }
 

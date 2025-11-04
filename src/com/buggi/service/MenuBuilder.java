@@ -27,13 +27,13 @@ public class MenuBuilder {
     }
 
     public MenuBuilder setMenuLines(String... lines) {
-        this.menuLines = lines;
+        menuLines = lines;
         return this;
     }
 
     public MenuBuilder setWelcomeMessage(String message) {
-        this.welcomeMessage = message;
-        this.hasWelcome = true;
+        welcomeMessage = message;
+        hasWelcome = true;
         return this;
     }
 

@@ -24,7 +24,7 @@ public class BudgetOperations {
         runFullBudgetReportProc(scanner, incomes, expenses, 0);
     }
 
-    public static void runFullBudgetReportProc(Scanner scanner, TransactionList incomes, TransactionList expenses, int tryRetryCount) {
+    private static void runFullBudgetReportProc(Scanner scanner, TransactionList incomes, TransactionList expenses, int tryRetryCount) {
         System.out.println("Would you like to see a full report? Answer yes(y)/no(n)");
         String report_choice = scanner.nextLine();
         switch (report_choice) {
