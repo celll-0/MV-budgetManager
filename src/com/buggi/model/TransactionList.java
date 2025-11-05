@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -51,8 +52,16 @@ public class TransactionList {
         return outstanding;
     }
 
-    private final Supplier<ZonedDateTime> today = () -> ZonedDateTime.from(LocalDate.now(ZoneId.systemDefault()));
-    private final Predicate<Transaction> transactionDateOutstandingFilter = transaction -> transaction.getDate().isBefore(today.get());
+    public static final Comparator<Transaction> ascendingOrder_byDate = (t1, t2) -> {
+        if (t1.getDate().isAfter(t2.getDate())) return 1;
+        else if (t1.getDate().isBefore(t2.getDate())) return -1;
+        else return 0;
+    };
+
+    private final Supplier<ZonedDateTime> today = () -> LocalDate.now(ZoneId.systemDefault()).atStartOfDay(ZoneId.systemDefault());
     private final Predicate<Transaction> transactionDateUpcomingFilter = transaction -> transaction.getDate().isAfter(today.get());
+    private final Predicate<Transaction> transactionDateOutstandingFilter = transaction -> {
+        return transaction.getDate().isBefore(today.get()) || transaction.getDate().isEqual(today.get());
+    };
 }
 

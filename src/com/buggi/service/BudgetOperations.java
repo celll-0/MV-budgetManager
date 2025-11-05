@@ -1,12 +1,11 @@
 package com.buggi.service;
 
+import java.awt.color.ICC_ColorSpace;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.InputMismatchException;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.buggi.model.TransactionList;
 import com.buggi.model.Transaction;
@@ -32,8 +31,8 @@ public class BudgetOperations {
         String report_choice = scanner.nextLine();
         switch (report_choice) {
             case "y" -> {
-                printTransactionReport(incomes);
-                printTransactionReport(expenses);
+                printTransactionReport(incomes, true);
+                printTransactionReport(expenses, true);
             }
             case "n" -> {
                 System.out.println("Exiting to main menu!");
@@ -146,15 +145,37 @@ public class BudgetOperations {
         }
     }
 
-    public static void printTransactionReport(TransactionList transactionList) {
+    public static void printTransactionReport(TransactionList transactionList, boolean relativeDateSort) {
         // Make transactionType title case.
         String transactionType = transactionList.type.substring(0,1).toUpperCase() + transactionList.type.substring(1).toLowerCase();
         System.out.println("\n___________________________\n\n");
         System.out.println(STR."\{transactionType} Report______________\n");
-        // Print out each transaction in amount-description format.
-        for(Transaction transaction : transactionList.getAll()) {
-            System.out.println(transaction.toString());
-            System.out.println("\n\n");
+        if(relativeDateSort){
+            // Split transaction list into upcoming and outstanding transactions
+            // and sort each list using the custom transaction comparator
+            ArrayList<Transaction> upcoming = transactionList.getUpcoming().stream().sorted(TransactionList.ascendingOrder_byDate)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            ArrayList<Transaction> outstanding = transactionList.getOutstanding().stream().sorted(TransactionList.ascendingOrder_byDate)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            // Print all items in each transaction list to the console.
+            System.out.println("\n__________Upcoming:\n");
+            printEachTransaction(upcoming);
+            System.out.println("\n___________Outstanding:\n");
+            printEachTransaction(outstanding);
+        } else {
+            // Print all transaction in defined string format to the console.
+            printEachTransaction(transactionList.getAll());
+        }
+    }
+
+    private static void printEachTransaction(ArrayList<Transaction> transactionList){
+        if(transactionList.isEmpty()){
+            System.out.println("\n  NONE FOUND!\n");
+        } else {
+            for (Transaction transaction : transactionList) {
+                System.out.println(transaction.toString());
+                System.out.println("\n\n");
+            }
         }
     }
 

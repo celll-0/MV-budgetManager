@@ -23,7 +23,7 @@ public class MenuOption {
         @Override
         public void handle(Map<String, ?> args){
             TransactionList transactionList = (TransactionList) args.get("transactionList");
-            BudgetOperations.printTransactionReport(transactionList);
+            BudgetOperations.printTransactionReport(transactionList, false);
         }
     }
 
