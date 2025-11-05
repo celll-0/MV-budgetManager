@@ -62,73 +62,54 @@ public class BudgetOperations {
     }
 
     /**
-     * Adds a new transaction to the specified list with user input validation.
-     * This is a convenience method that calls the overloaded version with a default retry count of 0.
-     * Use as entry to point to add a new transaction over the overloaded, unless in special cases
-     * where offsetting the retry count is desired.
+     * Creates new Transaction from prompted user input and add it to the given
+     * transaction list. Input methods facilitate retries up to the specified limit
+     * and will exit to the previous menu if this is exceeded. Those retry capabilities are
+     * supported by internal input validation.
      *
      * @param scanner The Scanner object for reading user input
      * @param transactionList The list to add the transaction to (incomes or expenses)
      */
     public static void runAddTransaction(Scanner scanner, TransactionList transactionList) {
-        runAddTransaction(scanner, transactionList, 0, "", "");
+        System.out.println("_________________________________\n");
+        int tryRetryCount = 0;
+        // Prompt user for transaction details input for each field, all 'promptFor' method use recursive retry.
+        String description = promptForTransactionDescription(scanner);
+        // Prompt method for transaction amount returns 0 if input process fails or retry limit is exceeded.
+        int amount = promptForTransactionAmount(scanner, transactionList.type, tryRetryCount);
+        if (amount == 0) return;
+        String dateString = promptForTransactionDate(scanner, tryRetryCount);
+        if (dateString.isBlank()) return;
+        // Construct the Transaction Object and add it to transaction list,. Then print success message
+        transactionList.add(createTransaction(amount, description, transactionList.type, dateString));
+        System.out.println("\nTransaction added successfully!");
+        System.out.println("\n_______________________________\n");
+        // Clear the input buffer to prevent any residual character corrupting next input.
+        clearInputBuffer(scanner);
     }
 
-    /**
-     * Adds a new transaction to the specified list with user input validation and recursive retry logic.
-     * Prompts the user for an amount and description. If the amount is invalid (zero or negative),
-     * the user is given up to 2 more attempts before returning to the menu.
-     * Use runAddTransaction parent function instead.
-     *
-     * @param scanner The Scanner object for reading user input
-     * @param transactionList The list to add the transaction to (incomes or expenses)
-     * @param tryRetryCount The current number of retry attempts (used for recursive validation)
-     * @param description The user description of the transaction
-     */
-    private static void runAddTransaction(Scanner scanner, TransactionList transactionList, int tryRetryCount, String description, String dateString) {
-        System.out.println("_________________________________\n");
-        // Return to the previous menu once the maximum retry count is reached
+    private static String promptForTransactionDescription(Scanner scanner){
+        System.out.println("What was this for: ");
+        return scanner.nextLine().trim();
+    }
+
+    private static int promptForTransactionAmount(Scanner scanner, String transactionType, int tryRetryCount){
         if(tryRetryCount == 3) {
+            // Exit input process if the maximum retry count has been reached.
             System.out.println("Too many invalid attempts. Exiting To menu...");
-            return;
-        }
-        // Preserve the origin user description in the case of a recursive call and do not request it again.
-
-        description = description.isBlank() ? "" : description;
-        if(tryRetryCount == 0) {
-            System.out.println("What was this for: ");
-            description = scanner.nextLine().trim();
-        }
-
-
-        dateString = dateString == null || dateString.trim().isBlank() ? "" : dateString;
-        if(dateString.trim().isBlank()){
-            try {
-                System.out.println("Enter date of transaction (in format 'YYYY-MM-DD'): ");
-                dateString = scanner.nextLine().trim();
-                if(!Validation.isValidIsoDate(dateString)){
-                    throw new InputMismatchException("Invalid date format: '" + dateString + "'. Expected format: YYYY-MM-DD");
-                }
-            } catch(InputMismatchException e){
-                // Attempt retry if the user enter a non-numerical value, clear the buffer and alert the user.
-                tryRetryCount++;
-                System.out.println(e.getMessage());
-                clearInputBuffer(scanner);
-                runAddTransaction(scanner, transactionList, tryRetryCount, description, null);
-            }
+            return 0;
         }
 
         int amount;
         try {
-            System.out.println(STR."Enter \{transactionList.type} amount: ");
+            System.out.println(STR."Enter \{transactionType} amount: ");
             amount = scanner.nextInt();
         } catch(InputMismatchException e){
             // Attempt retry if the user enters a non-numeric value, clear the buffer and alert the user.
             tryRetryCount++;
             System.out.println("\nInvalid amount. Please enter a positive number");
             clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionList, tryRetryCount, description, dateString);
-            return;
+            return promptForTransactionAmount(scanner, transactionType, tryRetryCount);
         }
 
         if(amount <= 0) {
@@ -136,22 +117,41 @@ public class BudgetOperations {
             tryRetryCount++;
             if(tryRetryCount < 3) System.out.println("\nInvalid amount. Please enter a positive number");
             clearInputBuffer(scanner);
-            runAddTransaction(scanner, transactionList, tryRetryCount, description, dateString);
-            return;
+            return promptForTransactionAmount(scanner, transactionType, tryRetryCount);
+        }
+        clearInputBuffer(scanner);
+        return amount;
+    }
+
+    private static String promptForTransactionDate(Scanner scanner, int tryRetryCount){
+        if(tryRetryCount == 3) {
+            // Exit input process if the maximum retry count has been reached.
+            System.out.println("Too many invalid attempts. Exiting To menu...");
+            return "";
         }
 
-        clearInputBuffer(scanner);
-        transactionList.add(createTransaction(amount, description, transactionList.type, dateString));
-        System.out.println("\nTransaction added successfully!");
-        System.out.println("\n_______________________________\n");
+        try {
+            System.out.println("Enter date of transaction (in format 'YYYY-MM-DD'): ");
+            String dateString = scanner.nextLine().trim();
+            if(!Validation.isValidIsoDate(dateString)){
+                throw new InputMismatchException("Invalid date format: '" + dateString + "'. Expected format: YYYY-MM-DD");
+            }
+            return dateString;
+        } catch(InputMismatchException e){
+            // Attempt retry if the user enter a non-numerical value, clear the buffer and alert the user.
+            tryRetryCount++;
+            System.out.println(e.getMessage());
+            clearInputBuffer(scanner);
+            return promptForTransactionDate(scanner, tryRetryCount);
+        }
     }
 
     public static void printTransactionReport(TransactionList transactionList) {
-//        Make transactionType title case.
+        // Make transactionType title case.
         String transactionType = transactionList.type.substring(0,1).toUpperCase() + transactionList.type.substring(1).toLowerCase();
         System.out.println("\n___________________________\n\n");
         System.out.println(STR."\{transactionType} Report______________\n");
-//        Print out each transaction in amount-description format.
+        // Print out each transaction in amount-description format.
         for(Transaction transaction : transactionList.getAll()) {
             System.out.println(transaction.toString());
             System.out.println("\n\n");

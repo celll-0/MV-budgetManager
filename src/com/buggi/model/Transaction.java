@@ -54,7 +54,7 @@ public class Transaction {
 
     public String toString(){
         String[] lines = new String[]{
-            STR."---> Date: \{this.date.toString()}",
+            STR."---> Date: \{this.date.toLocalDate()}",
             STR."---> Desc: \{this.description}",
             STR."---> Amount: £\{this.amount}"
         };
