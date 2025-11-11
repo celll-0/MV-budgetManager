@@ -11,7 +11,7 @@ public class Search {
 
     public static void lookUp(Transaction[] transactions, Scanner scanner){
         System.out.print("\n\n\nSearch:  ");
-        String searchTerm = scanner.nextLine();
+        String searchTerm = scanner.nextLine().toLowerCase();
         System.out.print("\n____________________\n");
 
         String[] searchTokens = searchTerm.split(" ");
@@ -25,7 +25,7 @@ public class Search {
                 .filter(transaction -> {
                     String descriptionLower = transaction.getDescription().toLowerCase();
                     for (String token : tokens) {
-                        if (descriptionLower.contains(token.toLowerCase())) return true;
+                        if (descriptionLower.contains(token)) return true;
                     }
                     return false;
                 })
