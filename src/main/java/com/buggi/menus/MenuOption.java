@@ -1,12 +1,18 @@
 package com.buggi.menus;
 
+import com.buggi.model.Transaction;
 import com.buggi.service.BudgetOperations;
 
-import java.time.format.DateTimeFormatter;
+import java.sql.Array;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.buggi.model.TransactionList;
 import com.buggi.consoleUi.ConsoleScreen;
+import com.buggi.service.Search;
 
 
 public class MenuOption {
@@ -32,6 +38,25 @@ public class MenuOption {
             System.out.println("\n__________________________");
             System.out.println("\nPress enter to continue...");
             BudgetOperations.clearInputBuffer(scanner);
+        }
+    }
+
+    public static class SearchAllTransactionsOption implements IMenuOptionHandler {
+        private final String[] requiredParams = new String[]{"incomes", "expenses", "scanner"};
+
+        @Override
+        public String[] getHandlerDependencyNames() { return requiredParams; }
+
+        @Override
+        public void handle(Map<String, ?> args){
+            TransactionList incomes = (TransactionList) args.get("incomes");
+            TransactionList expenses = (TransactionList) args.get("expenses");
+            Scanner scanner = (Scanner) args.get("scanner");
+
+            Transaction[] transactions = (Transaction[]) Stream.concat(incomes.getAll().stream(), expenses.getAll().stream())
+                            .toArray(Transaction[]::new);
+            ConsoleScreen.clear();
+            Search.lookUp(transactions, scanner);
         }
     }
 

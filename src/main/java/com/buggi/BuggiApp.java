@@ -25,14 +25,16 @@ public class BuggiApp {
                         .addOption("1", new FullBudgetSummaryOption())
                         .addOption("2", new NextMenuOption("transaction").setTransactionType("incomes"))
                         .addOption("3", new NextMenuOption("transaction").setTransactionType("expenses"))
-                        .addOption("4", new ExitProcOption(false))
+                        .addOption("4", new SearchAllTransactionsOption())
+                        .addOption("5", new ExitProcOption(false))
                         .setWelcomeMessage("\n\nWelcome to Buggi!")
                         .setMenuLines(
                                 "_________________________________\n",
                                 "[1] Full budget summary",
                                 "[2] Incomes ->",
                                 "[3] Expenses ->",
-                                "[4] Quit"
+                                "[4] Search all transactions",
+                                "[5] Quit"
                         ).build(),
                 new MenuBuilder("transaction", scanner)
                         .addOption("1", new AddTransactionOption())

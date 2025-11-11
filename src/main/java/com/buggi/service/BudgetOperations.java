@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.buggi.model.TransactionList;
 import com.buggi.model.Transaction;
 import com.buggi.utils.Validation;
+import com.buggi.consoleUi.ConsoleScreen;
 
 
 public class BudgetOperations {
@@ -166,23 +167,12 @@ public class BudgetOperations {
                     .collect(Collectors.toCollection(ArrayList::new));
             // Print all items in each transaction list to the console.
             System.out.println("\n__________Upcoming:\n");
-            printEachTransaction(upcoming);
+            ConsoleScreen.printEachTransaction(upcoming, false);
             System.out.println("\n___________Outstanding:\n");
-            printEachTransaction(outstanding);
+            ConsoleScreen.printEachTransaction(outstanding, false);
         } else {
             // Print all transaction in defined string format to the console.
-            printEachTransaction(transactionList.getAll());
-        }
-    }
-
-    private static void printEachTransaction(ArrayList<Transaction> transactionList){
-        if(transactionList.isEmpty()){
-            System.out.println("\n  NONE FOUND!\n");
-        } else {
-            for (Transaction transaction : transactionList) {
-                System.out.println(transaction.toString());
-                System.out.println("\n\n");
-            }
+            ConsoleScreen.printEachTransaction(transactionList.getAll(), false);
         }
     }
 
