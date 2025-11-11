@@ -28,6 +28,7 @@ public class ConsoleProcess {
     public void run(Map<String, Object> resources){
         while(!exited){
             try {
+                ConsoleScreen.clear();
                 IMenuOptionHandler optionHandler = currentMenu.runProc();
                 Map<String, Object> handlerParams = getRequiredResources(resources, optionHandler.getHandlerDependencyNames());
 
@@ -55,6 +56,7 @@ public class ConsoleProcess {
                 handlerParams = fulfillHandlerDependencyRequirements(resources, optionHandler);
                 optionHandler.handle(handlerParams);
             } catch(IllegalArgumentException e){
+                currentMenu.errorMessage = e.getMessage();
                 continue;
             }
         }
@@ -99,6 +101,8 @@ public class ConsoleProcess {
         if (handlerDependencyNames.contains("scanner")) handlerResources.put("scanner", currentMenu.getScanner());
         return handlerResources;
     }
+
+
 
     private void exit(){ exited = true; }
 }

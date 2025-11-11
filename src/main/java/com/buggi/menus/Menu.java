@@ -11,6 +11,7 @@ public abstract class Menu {
     protected final Scanner scanner;
     protected boolean exit = false;
     public final String name;
+    public String errorMessage = null;
 
     public Menu(Map<String, IMenuOptionHandler> options, Scanner scanner, String name) {
         this.options = options;
@@ -29,11 +30,9 @@ public abstract class Menu {
 
     public IMenuOptionHandler runProc(){
         String userSelection = runAndGetChoice();
-        System.out.println("\n\n");
         if(!isNumeric(userSelection) || !isInOptionRange(userSelection, options)){
-//                  Flag invalid input and warn the user.
-            System.out.println("Invalid choice. Please choose from the following options");
-            throw new IllegalArgumentException(("Invalid selection made menu " + name)); // Throw an exception to catch in consoleProc and continue the loop there.
+            // Flag invalid input and warn the user.
+            throw new IllegalArgumentException("Invalid choice. Please choose from the given options"); // Throw an exception to catch in consoleProc and continue the loop there.
         }
         IMenuOptionHandler optionHandler = getOptionHandler(userSelection);
         updateMenuState();
@@ -65,6 +64,13 @@ public abstract class Menu {
 
     public String runAndGetChoice() {
         String menuText = getMenuText();
+        System.out.println("\n\n\n");
+
+        if(errorMessage != null){
+            System.out.println(errorMessage);
+            errorMessage = null;
+        }
+
         System.out.println(menuText);
         return scanner.nextLine();
     }

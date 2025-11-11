@@ -12,7 +12,7 @@ import com.buggi.menus.Menu;
 
 
 public class BuggiApp {
-    void main(String[] args) {
+    public static void main(String[] args) {
         TransactionList incomes = new TransactionList("income");
         TransactionList expenses = new TransactionList("expense");
         Map<String, Object> resources = new HashMap<>();

@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Scanner;
 import com.buggi.model.TransactionList;
+import com.buggi.consoleUi.ConsoleScreen;
 
 
 public class MenuOption {
@@ -15,7 +16,7 @@ public class MenuOption {
     }
 
     public static class TransactionReportOption implements IMenuOptionHandler{
-        private final String[] requiredParams = new String[]{"transactionList"};
+        private final String[] requiredParams = new String[]{"transactionList", "scanner"};
 
         @Override
         public String[] getHandlerDependencyNames() { return requiredParams; }
@@ -23,7 +24,14 @@ public class MenuOption {
         @Override
         public void handle(Map<String, ?> args){
             TransactionList transactionList = (TransactionList) args.get("transactionList");
+            Scanner scanner = (Scanner) args.get("scanner");
+
+            ConsoleScreen.clear();
             BudgetOperations.printTransactionReport(transactionList, false);
+            // Pauses execution to allow user to review report
+            System.out.println("\n__________________________");
+            System.out.println("\nPress enter to continue...");
+            BudgetOperations.clearInputBuffer(scanner);
         }
     }
 
@@ -37,7 +45,9 @@ public class MenuOption {
         public void handle(Map<String, ?> args){
             TransactionList transactionList = (TransactionList) args.get("transactionList");
             Scanner scanner = (Scanner) args.get("scanner");
-            DateTimeFormatter formatter = (DateTimeFormatter) args.get("formatter");
+
+            ConsoleScreen.clear();
+            System.out.println("\n\n___ADD TRANSACTION_______________\n");
             BudgetOperations.runAddTransaction(scanner, transactionList);
         }
     }
@@ -54,6 +64,7 @@ public class MenuOption {
             TransactionList expenses = (TransactionList) args.get("expenses");
             Scanner scanner = (Scanner) args.get("scanner");
 
+            ConsoleScreen.clear();
             Map<String, Integer> summary = BudgetOperations.calculateSummary(incomes, expenses);
             BudgetOperations.printSummary(summary);
             BudgetOperations.runFullBudgetReportProc(scanner, incomes, expenses);

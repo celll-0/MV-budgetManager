@@ -31,7 +31,6 @@ public class GenericMenu extends Menu {
         if(name.equals("transaction") && transactionType != null) {
             menuText = menuText.replace("{T_TYPE}", transactionType.toUpperCase());
         }
-
         return menuText;
     }
 

@@ -16,9 +16,9 @@ public class BudgetOperations {
     public static void printSummary(Map<String, Integer> summary) {
         System.out.println("\n___________________________\n");
         System.out.println("Summary: \n");
-        System.out.println(STR."Income: £\{summary.get("incomes")}");
-        System.out.println(STR."Expenses: £\{summary.get("expenses")}");
-        System.out.println(STR."Net: £\{summary.get("total")}");
+        System.out.println("Income: £" + summary.get("incomes"));
+        System.out.println("Expenses: £" + summary.get("expenses"));
+        System.out.println("Net: £" + summary.get("total"));
         System.out.println("\n___________________________\n");
     }
 
@@ -33,6 +33,10 @@ public class BudgetOperations {
             case "y" -> {
                 printTransactionReport(incomes, true);
                 printTransactionReport(expenses, true);
+                // Pauses execution to allow user to review report
+                System.out.println("\n__________________________");
+                System.out.println("\nPress enter to continue...");
+                clearInputBuffer(scanner);
             }
             case "n" -> {
                 System.out.println("Exiting to main menu!");
@@ -70,7 +74,6 @@ public class BudgetOperations {
      * @param transactionList The list to add the transaction to (incomes or expenses)
      */
     public static void runAddTransaction(Scanner scanner, TransactionList transactionList) {
-        System.out.println("_________________________________\n");
         int tryRetryCount = 0;
         // Prompt user for transaction details input for each field, all 'promptFor' method use recursive retry.
         String description = promptForTransactionDescription(scanner);
@@ -89,7 +92,9 @@ public class BudgetOperations {
 
     private static String promptForTransactionDescription(Scanner scanner){
         System.out.println("What was this for: ");
-        return scanner.nextLine().trim();
+        String answer = scanner.nextLine().trim();
+        System.out.println("\n");
+        return answer;
     }
 
     private static int promptForTransactionAmount(Scanner scanner, String transactionType, int tryRetryCount){
@@ -101,7 +106,7 @@ public class BudgetOperations {
 
         int amount;
         try {
-            System.out.println(STR."Enter \{transactionType} amount: ");
+            System.out.println("Enter " + transactionType + " amount: ");
             amount = scanner.nextInt();
         } catch(InputMismatchException e){
             // Attempt retry if the user enters a non-numeric value, clear the buffer and alert the user.
@@ -119,6 +124,7 @@ public class BudgetOperations {
             return promptForTransactionAmount(scanner, transactionType, tryRetryCount);
         }
         clearInputBuffer(scanner);
+        System.out.println("\n");
         return amount;
     }
 
@@ -135,6 +141,7 @@ public class BudgetOperations {
             if(!Validation.isValidIsoDate(dateString)){
                 throw new InputMismatchException("Invalid date format: '" + dateString + "'. Expected format: YYYY-MM-DD");
             }
+            System.out.println("\n");
             return dateString;
         } catch(InputMismatchException e){
             // Attempt retry if the user enter a non-numerical value, clear the buffer and alert the user.
@@ -149,7 +156,7 @@ public class BudgetOperations {
         // Make transactionType title case.
         String transactionType = transactionList.type.substring(0,1).toUpperCase() + transactionList.type.substring(1).toLowerCase();
         System.out.println("\n___________________________\n\n");
-        System.out.println(STR."\{transactionType} Report______________\n");
+        System.out.println(transactionType + "Report______________\n");
         if(relativeDateSort){
             // Split transaction list into upcoming and outstanding transactions
             // and sort each list using the custom transaction comparator
@@ -195,7 +202,7 @@ public class BudgetOperations {
         return total;
     }
 
-    private static void clearInputBuffer(Scanner scanner) {
+    public static void clearInputBuffer(Scanner scanner) {
         // Skip any remaining characters in the buffer
         scanner.nextLine();
     }
